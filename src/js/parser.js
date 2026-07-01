@@ -3,33 +3,149 @@
 const DataParser = {
 
   /**
-   * Parse a personal full line.
-   * Format: DOB,SSN,FirstName,MiddleName,LastName,Address,City,ZIP,State,State2,Email,Phone,Extra
-   * Middle name is discarded.
+   * Proper CSV line parser — handles quoted fields with commas inside.
+   * e.g. "1610 North Interstate 35, Apt 417" → single field.
+   */
+  _parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  },
+
+  /**
+   * Parse a personal full line. Supports multiple formats:
+   *
+   * Format A (13 fields — original with State2 and bank):
+   *   DOB,SSN,First,Middle,Last,Address,City,ZIP,State,State2,Email,Phone,Extra
+   *
+   * Format B (12 fields — without bank, with State2):
+   *   DOB,SSN,First,Middle,Last,Address,City,ZIP,State,State2,Email,Phone
+   *
+   * Format C (11 fields — most common new format):
+   *   DOB,SSN,First,Middle,Last,Address,City,ZIP,State,Email,Phone
+   *   Middle CAN be empty, single letter, or full word.
+   *   Detected by: parts[9] contains '@'
+   *
+   * Format D (10 fields — no middle name):
+   *   DOB,SSN,First,Last,Address,City,ZIP,State,Email,Phone
+   *   Detected by: parts[8] contains '@'
+   *
+   * Uses proper CSV parsing to handle quoted fields (addresses with commas).
    */
   parsePersonalFull(line) {
-    const parts = line.split(',');
-    if (parts.length < 13) return null;
+    if (!line || !line.trim()) return null;
 
-    const firstName = parts[2].trim();
-    const lastName  = parts[4].trim();
-    if (!firstName || !lastName) return null;
+    const parts = this._parseCSVLine(line);
+    const len   = parts.length;
 
-    return {
-      raw:       line.trim(),
-      dob:       parts[0].trim(),
-      ssn:       parts[1].trim(),
-      firstName,
-      lastName,
-      address:   parts[5].trim(),
-      city:      parts[6].trim(),
-      zip:       parts[7].trim(),
-      state:     parts[8].trim().toUpperCase(),
-      email:     parts[10].trim(),
-      phone:     parts[11].trim(),
-      extra:     parts[12].trim(),
-      used:      false
-    };
+    if (len < 10) return null;
+
+    // ── Format A: 13+ fields (original with State2 + bank)
+    if (len >= 13 && parts[10].includes('@')) {
+      const firstName = parts[2];
+      const lastName  = parts[4];
+      if (!firstName || !lastName) return null;
+      return {
+        raw:       line.trim(),
+        dob:       parts[0],
+        ssn:       parts[1],
+        firstName,
+        lastName,
+        address:   parts[5],
+        city:      parts[6],
+        zip:       parts[7],
+        state:     parts[8].toUpperCase(),
+        email:     parts[10],
+        phone:     parts[11],
+        extra:     parts[12] || '',
+        used:      false
+      };
+    }
+
+    // ── Format B: 12 fields (State2, no bank). Email at index 10.
+    if (len === 12 && parts[10].includes('@')) {
+      const firstName = parts[2];
+      const lastName  = parts[4];
+      if (!firstName || !lastName) return null;
+      return {
+        raw:       line.trim(),
+        dob:       parts[0],
+        ssn:       parts[1],
+        firstName,
+        lastName,
+        address:   parts[5],
+        city:      parts[6],
+        zip:       parts[7],
+        state:     parts[8].toUpperCase(),
+        email:     parts[10],
+        phone:     parts[11],
+        extra:     '',
+        used:      false
+      };
+    }
+
+    // ── Format C: 11 fields. Email at index 9.
+    // DOB,SSN,First,Middle,Last,Address,City,ZIP,State,Email,Phone
+    // Middle can be empty (''), single char ('D'), initials ('L.'), or full word ('Mae')
+    if (len === 11 && parts[9].includes('@')) {
+      const firstName = parts[2];
+      const lastName  = parts[4];
+      if (!firstName || !lastName) return null;
+      return {
+        raw:       line.trim(),
+        dob:       parts[0],
+        ssn:       parts[1],
+        firstName,
+        lastName,
+        address:   parts[5],
+        city:      parts[6],
+        zip:       parts[7],
+        state:     parts[8].toUpperCase(),
+        email:     parts[9],
+        phone:     parts[10],
+        extra:     '',
+        used:      false
+      };
+    }
+
+    // ── Format D: 10 fields, no middle name. Email at index 8.
+    // DOB,SSN,First,Last,Address,City,ZIP,State,Email,Phone
+    if (len === 10 && parts[8].includes('@')) {
+      const firstName = parts[2];
+      const lastName  = parts[3];
+      if (!firstName || !lastName) return null;
+      return {
+        raw:       line.trim(),
+        dob:       parts[0],
+        ssn:       parts[1],
+        firstName,
+        lastName,
+        address:   parts[4],
+        city:      parts[5],
+        zip:       parts[6],
+        state:     parts[7].toUpperCase(),
+        email:     parts[8],
+        phone:     parts[9],
+        extra:     '',
+        used:      false
+      };
+    }
+
+    return null;
   },
 
   /**
@@ -41,7 +157,6 @@ const DataParser = {
     const trimmed = line.trim();
     if (!trimmed) return null;
 
-    // Split by 2+ whitespace characters
     const parts = trimmed.split(/\s{2,}/);
     if (parts.length < 3) return null;
 
@@ -51,27 +166,6 @@ const DataParser = {
       ein:         parts[1].trim(),
       date:        parts[2].trim(),
       used:        false
-    };
-  },
-
-  /**
-   * Parse an email line.
-   * Format: email:password
-   */
-  parseEmail(line) {
-    const trimmed = line.trim();
-    const idx = trimmed.indexOf(':');
-    if (idx === -1) return null;
-
-    const email    = trimmed.substring(0, idx).trim();
-    const password = trimmed.substring(idx + 1).trim();
-    if (!email || !password) return null;
-
-    return {
-      raw:      trimmed,
-      email,
-      password,
-      used:     false
     };
   }
 };

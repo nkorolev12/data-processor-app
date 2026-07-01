@@ -187,9 +187,182 @@
   font-size: 0.85rem;
 }
 
-.business-section {
+/* ── Section Label ─────────────────────────────────────────── */
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.business-section,
+.email-section {
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+/* ── Attach Business Button ────────────────────────────────── */
+.business-empty {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-attach-business {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px dashed var(--border-hover);
+  background: rgba(124, 58, 237, 0.04);
+  color: var(--accent-light);
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--transition);
+  justify-content: center;
+}
+.btn-attach-business:hover {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.1);
+  transform: translateY(-1px);
+}
+.btn-attach-business:active {
+  transform: scale(0.98);
+}
+
+/* ── Email Input Group ─────────────────────────────────────── */
+.email-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.email-inline-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.email-inline-input:focus {
+  border-color: var(--accent);
+}
+.email-inline-input::placeholder {
+  color: var(--text-muted);
+}
+
+.btn-save-email {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: var(--gradient);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-glow);
+}
+.btn-save-email:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+.btn-save-email:active {
+  transform: scale(0.97);
+}
+
+/* ── Email Display (saved) ─────────────────────────────────── */
+.email-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.email-value {
+  flex: 1;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.82rem;
+  color: var(--accent-light);
+  word-break: break-all;
+}
+
+.btn-edit-email {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-edit-email:hover {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-hover);
+}
+
+/* ── Reference Number Section ──────────────────────────────── */
+.reference-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.reference-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reference-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reference-value {
+  flex: 1;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--warning);
+  background: var(--warning-bg);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.03em;
+}
+
+.btn-edit-reference {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-edit-reference:hover {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-hover);
 }
 
 /* ── Proxy Section ─────────────────────────────────────────── */
@@ -349,4 +522,37 @@
 
 .btn-status:active {
   transform: scale(0.97);
+}
+
+/* ── Footer Actions ────────────────────────────────────────── */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.footer-tg-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Override copy button hover for specific actions */
+.btn-tg-pending:hover {
+  background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+  box-shadow: 0 4px 15px rgba(42, 171, 238, 0.3);
+}
+
+.btn-tg-done:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-delete-card:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: transparent;
+  box-shadow: none;
 }

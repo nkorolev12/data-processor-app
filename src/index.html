@@ -63,28 +63,17 @@
           </div>
           <div id="business-list" class="items-list"></div>
         </div>
-
-        <!-- Emails -->
-        <div class="column">
-          <div class="column-header">
-            <span class="column-icon">📧</span>
-            <h3>Почты</h3>
-          </div>
-          <textarea id="email-input" class="data-input" rows="5"
-            placeholder="Вставьте почты в формате email:password&#10;(каждая на новой строке)..."></textarea>
-          <button id="btn-add-email" class="btn-add">+ Добавить</button>
-          <div class="column-info">
-            Свободно: <strong id="email-count">0 / 0</strong>
-          </div>
-          <div id="email-list" class="items-list"></div>
-        </div>
       </div>
 
-      <!-- Create button -->
+      <!-- Create buttons -->
       <div class="create-section">
         <button id="btn-create-full" class="btn-create">
-          <span class="btn-create-icon">🔄</span>
-          <span>СОЗДАТЬ ФУЛКУ</span>
+          <span class="btn-create-icon">👤</span>
+          <span>СОЗДАТЬ КАРТОЧКУ</span>
+        </button>
+        <button id="btn-create-manual" class="btn-create btn-create-manual">
+          <span class="btn-create-icon">✏️</span>
+          <span>СОЗДАТЬ ВРУЧНУЮ</span>
         </button>
       </div>
 
@@ -157,6 +146,72 @@
 
   <!-- Toast -->
   <div id="toast" class="toast"></div>
+
+  <!-- Manual Create Modal -->
+  <div id="modal-manual" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>✏️ Создать карточку вручную</h3>
+        <button id="modal-close" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div class="modal-field">
+            <label>Имя</label>
+            <input id="mf-firstname" type="text" class="modal-input" placeholder="Cara">
+          </div>
+          <div class="modal-field">
+            <label>Фамилия</label>
+            <input id="mf-lastname" type="text" class="modal-input" placeholder="Hunt">
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <label>Дата рождения</label>
+            <input id="mf-dob" type="text" class="modal-input" placeholder="1998-09-15">
+          </div>
+          <div class="modal-field">
+            <label>SSN</label>
+            <input id="mf-ssn" type="text" class="modal-input" placeholder="628-64-3460">
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field modal-field-wide">
+            <label>Адрес</label>
+            <input id="mf-address" type="text" class="modal-input" placeholder="924 Sunrise Dr">
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <label>Город</label>
+            <input id="mf-city" type="text" class="modal-input" placeholder="Kennedale">
+          </div>
+          <div class="modal-field">
+            <label>ZIP</label>
+            <input id="mf-zip" type="text" class="modal-input" placeholder="76060">
+          </div>
+          <div class="modal-field">
+            <label>Штат</label>
+            <input id="mf-state" type="text" class="modal-input" placeholder="TX">
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field modal-field-wide">
+            <label>Email (личный)</label>
+            <input id="mf-email" type="text" class="modal-input" placeholder="cara_hunt11@yahoo.com">
+          </div>
+          <div class="modal-field">
+            <label>Телефон</label>
+            <input id="mf-phone" type="text" class="modal-input" placeholder="(817) 630-6868">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-cancel" class="btn-modal-cancel">Отмена</button>
+        <button id="modal-submit" class="btn-modal-submit">✨ Создать карточку</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts (load order matters) -->
   <script src="js/utils.js"></script>
