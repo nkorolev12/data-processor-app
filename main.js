@@ -90,7 +90,7 @@ function createWindow() {
   const saved = loadWinState();
 
   mainWindow = new BrowserWindow({
-    width:     saved?.width  || 1440,
+    width:     saved?.width  || 1100,
     height:    saved?.height || 920,
     x:         saved?.x,
     y:         saved?.y,

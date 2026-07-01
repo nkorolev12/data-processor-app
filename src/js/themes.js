@@ -101,11 +101,11 @@ const ThemeManager = {
     },
   },
 
-  zoomLevels: [75, 90, 110, 125, 150, 175],
+  zoomLevels: [70, 85, 100, 115, 130, 150],
 
   init() {
     const savedTheme = localStorage.getItem('dp-theme') || 'dark-purple';
-    const savedZoom  = parseInt(localStorage.getItem('dp-zoom') || '110', 10);
+    const savedZoom  = parseInt(localStorage.getItem('dp-zoom') || '100', 10);
     this.applyTheme(savedTheme, false);
     this.applyZoom(savedZoom, false);
     this._setupPanel();
@@ -123,7 +123,9 @@ const ThemeManager = {
   },
 
   applyZoom(percent, save = true) {
-    document.documentElement.style.zoom = (percent / 100).toString();
+    // 100% in UI physically equals 110% (1.1 scale)
+    const scale = (percent * 1.1) / 100;
+    document.documentElement.style.zoom = scale.toString();
     if (save) localStorage.setItem('dp-zoom', String(percent));
     const el = document.getElementById('zoom-value');
     if (el) el.textContent = `${percent}%`;
