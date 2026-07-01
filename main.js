@@ -21,8 +21,6 @@ process.on('unhandledRejection', (reason) => {
 
 // ── Auto-updater config ───────────────────────────────────────
 
-// Токен нужен, так как репозиторий на GitHub приватный
-autoUpdater.addAuthHeader("token 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");
 autoUpdater.autoDownload = true;       // скачивает автоматически в фоне
 autoUpdater.autoInstallOnAppQuit = true; // устанавливает при следующем закрытии
 
