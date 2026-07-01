@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Processor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- ── Header ────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">Data Processor</span>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="processing">
+          <span class="tab-icon">📋</span><span>Обработка</span>
+        </button>
+        <button class="tab-btn" data-tab="dashboard">
+          <span class="tab-icon">📊</span><span>Дашборд</span>
+        </button>
+      </nav>
+      <div class="header-spacer"></div>
+    </header>
+
+    <!-- ── Processing Page ───────────────────────────────── -->
+    <main id="page-processing" class="page active">
+
+      <!-- 3 Input Columns -->
+      <div class="columns-container">
+        <!-- Personal Fulls -->
+        <div class="column">
+          <div class="column-header">
+            <span class="column-icon">👤</span>
+            <h3>Персональные фулки</h3>
+          </div>
+          <textarea id="personal-input" class="data-input" rows="5"
+            placeholder="Вставьте персональные фулки&#10;(каждая на новой строке)..."></textarea>
+          <button id="btn-add-personal" class="btn-add">+ Добавить</button>
+          <div class="column-info">
+            Свободно: <strong id="personal-count">0 / 0</strong>
+          </div>
+          <div id="personal-list" class="items-list"></div>
+        </div>
+
+        <!-- Business Fulls -->
+        <div class="column">
+          <div class="column-header">
+            <span class="column-icon">🏢</span>
+            <h3>Бизнес фулки</h3>
+          </div>
+          <textarea id="business-input" class="data-input" rows="5"
+            placeholder="Вставьте бизнес фулки&#10;(каждая на новой строке)..."></textarea>
+          <button id="btn-add-business" class="btn-add">+ Добавить</button>
+          <div class="column-info">
+            Свободно: <strong id="business-count">0 / 0</strong>
+          </div>
+          <div id="business-list" class="items-list"></div>
+        </div>
+
+        <!-- Emails -->
+        <div class="column">
+          <div class="column-header">
+            <span class="column-icon">📧</span>
+            <h3>Почты</h3>
+          </div>
+          <textarea id="email-input" class="data-input" rows="5"
+            placeholder="Вставьте почты в формате email:password&#10;(каждая на новой строке)..."></textarea>
+          <button id="btn-add-email" class="btn-add">+ Добавить</button>
+          <div class="column-info">
+            Свободно: <strong id="email-count">0 / 0</strong>
+          </div>
+          <div id="email-list" class="items-list"></div>
+        </div>
+      </div>
+
+      <!-- Create button -->
+      <div class="create-section">
+        <button id="btn-create-full" class="btn-create">
+          <span class="btn-create-icon">🔄</span>
+          <span>СОЗДАТЬ ФУЛКУ</span>
+        </button>
+      </div>
+
+      <!-- Ready Fulls -->
+      <div id="ready-fulls-container" class="ready-container"></div>
+    </main>
+
+    <!-- ── Dashboard Page ────────────────────────────────── -->
+    <main id="page-dashboard" class="page">
+
+      <!-- KPI Cards -->
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <div class="kpi-icon">📋</div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <div class="kpi-label">Фулок сделано</div>
+        </div>
+        <div class="kpi-card kpi-success">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-value" id="kpi-done">0</div>
+          <div class="kpi-label">Регистраций</div>
+        </div>
+        <div class="kpi-card kpi-warning">
+          <div class="kpi-icon">⏳</div>
+          <div class="kpi-value" id="kpi-pending">0</div>
+          <div class="kpi-label">Пендинги</div>
+        </div>
+        <div class="kpi-card kpi-danger">
+          <div class="kpi-icon">❌</div>
+          <div class="kpi-value" id="kpi-rejected">0</div>
+          <div class="kpi-label">Отказы</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-section glass-card">
+        <div class="chart-header">
+          <h3>📈 Статистика по дням</h3>
+          <select id="period-select" class="period-select">
+            <option value="7">7 дней</option>
+            <option value="14" selected>14 дней</option>
+            <option value="30">30 дней</option>
+          </select>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- History Table -->
+      <div class="history-section glass-card">
+        <h3>📅 История по дням</h3>
+        <div class="table-wrapper">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Всего</th>
+                <th>Сделано</th>
+                <th>Пендинг</th>
+                <th>Отказ</th>
+              </tr>
+            </thead>
+            <tbody id="stats-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Scripts (load order matters) -->
+  <script src="js/utils.js"></script>
+  <script src="js/proxy.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

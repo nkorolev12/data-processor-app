@@ -1,0 +1,40 @@
+{
+  "name": "data-processor",
+  "version": "1.0.0",
+  "description": "Приложение для обработки данных",
+  "main": "main.js",
+  "author": "nkorolev12",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable",
+    "release": "electron-builder --win portable --publish always"
+  },
+  "build": {
+    "appId": "com.dataprocessor.app",
+    "productName": "DataProcessor",
+    "publish": {
+      "provider": "github",
+      "owner": "nkorolev12",
+      "repo": "data-processor-app",
+      "private": true
+    },
+    "win": {
+      "target": "portable"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*"
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^26.0.0"
+  }
+}
