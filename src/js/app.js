@@ -39,6 +39,56 @@ const App = {
     this.setupManualCreate();
 
     await DashboardManager.init();
+
+    this.setupUpdateBanner();
+  },
+
+  /* ── Update Banner ─────────────────────────────────────── */
+
+  setupUpdateBanner() {
+    if (!window.electronAPI?.onUpdateAvailable) return;
+
+    const banner     = document.getElementById('update-banner');
+    const icon       = document.getElementById('update-icon');
+    const title      = document.getElementById('update-title');
+    const desc       = document.getElementById('update-desc');
+    const fill       = document.getElementById('update-progress-fill');
+    const pct        = document.getElementById('update-progress-pct');
+    const progressWrap = document.getElementById('update-progress-wrap');
+    const installBtn = document.getElementById('btn-install-update');
+    const laterBtn   = document.getElementById('btn-update-later');
+
+    const show = () => banner.classList.add('visible');
+    const hide = () => banner.classList.remove('visible');
+
+    window.electronAPI.onUpdateAvailable((version) => {
+      icon.textContent  = '🚀';
+      title.textContent = `Доступно обновление v${version}`;
+      desc.textContent  = 'Скачивается в фоне автоматически...';
+      progressWrap.style.display = 'flex';
+      installBtn.style.display   = 'none';
+      show();
+    });
+
+    window.electronAPI.onUpdateProgress((percent) => {
+      fill.style.width  = `${percent}%`;
+      pct.textContent   = `${percent}%`;
+      desc.textContent  = 'Загружается...';
+    });
+
+    window.electronAPI.onUpdateDownloaded(() => {
+      icon.textContent  = '✅';
+      title.textContent = 'Обновление готово к установке!';
+      desc.textContent  = 'Нажмите «Установить» — приложение перезапустится';
+      progressWrap.style.display = 'none';
+      installBtn.style.display   = 'flex';
+    });
+
+    installBtn.addEventListener('click', () => {
+      window.electronAPI.installUpdate();
+    });
+
+    laterBtn.addEventListener('click', hide);
   },
 
   /* ── Tab Navigation ────────────────────────────────────── */
