@@ -8,8 +8,6 @@ const App = {
   /* ── Init ──────────────────────────────────────────────── */
 
   async init() {
-    this._bindEvents();
-    
     // Set version
     try {
       const version = await window.electronAPI.getAppVersion();
