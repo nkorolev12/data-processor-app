@@ -100,15 +100,18 @@ function createWindow() {
 // ── IPC Handlers ──────────────────────────────────────────────
 
 ipcMain.handle('read-data', async (_event, filename) => {
-  const filePath = path.join(getDataDir(), filename);
+  const dir = getDataDir();
+  const filePath = path.join(dir, filename);
+  if (!fs.existsSync(filePath)) return null;
+  
   try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
-    return null;
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(raw);
   } catch (err) {
-    console.error(`Error reading ${filename}:`, err);
-    return null;
+    fs.appendFileSync(path.join(app.getPath('userData'), 'error.log'), `\n[${new Date().toISOString()}] JSON Parse Error for ${filename}: ${err.message}\n`);
+    // Rename corrupted file so it doesn't block future starts
+    fs.renameSync(filePath, filePath + '.corrupted.' + Date.now());
+    return null; // Return null so app initializes fresh
   }
 });
 
@@ -127,14 +130,28 @@ ipcMain.handle('get-data-path', () => getDataDir());
 
 ipcMain.handle('get-app-version', () => app.getVersion());
 
-// ── App Lifecycle ─────────────────────────────────────────────
+// ── App Lifecycle & Single Instance Lock ────────────────────────
 
-app.whenReady().then(createWindow);
+const gotTheLock = app.requestSingleInstanceLock();
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Пользователь пытался запустить вторую копию, восстанавливаем фокус на первую
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
+  app.whenReady().then(createWindow);
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+}

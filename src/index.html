@@ -8,6 +8,14 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/cards.css">
   <link rel="stylesheet" href="css/dashboard.css">
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      window.electronAPI.writeData('frontend_error.log', message + ' ' + (error ? error.stack : ''));
+    };
+    window.addEventListener("unhandledrejection", function(event) {
+      window.electronAPI.writeData('frontend_error.log', 'Promise Rejection: ' + event.reason);
+    });
+  </script>
 </head>
 <body>
   <div class="app-container">
