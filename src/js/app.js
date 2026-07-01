@@ -885,16 +885,23 @@ const App = {
   /* ── Helpers ───────────────────────────────────────────── */
 
   /**
-   * Generates email like jennaspahn723@outlook.com
-   * firstName + lastName (lowercase, no spaces) + 3 random digits + @domain
+   * Generates email like jennaspahn72@outlook.com
+   * firstName (1st word) + lastName (1st word) + 1-4 random digits + @domain
    */
   _generateEmail(firstName, lastName) {
     const domains = ['outlook.com', 'gmail.com', 'yahoo.com', 'hotmail.com', 'icloud.com'];
-    const fn = (firstName || '').toLowerCase().replace(/[^a-z]/g, '');
-    const ln = (lastName  || '').toLowerCase().replace(/[^a-z]/g, '');
-    const num = Math.floor(100 + Math.random() * 900); // 3 digits: 100-999
+    const fn = (firstName || '').trim().split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+    const ln = (lastName  || '').trim().split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+    
+    // Generate 1 to 4 random digits
+    const digitsCount = Math.floor(Math.random() * 4) + 1;
+    let numStr = '';
+    for (let i = 0; i < digitsCount; i++) {
+      numStr += Math.floor(Math.random() * 10).toString();
+    }
+    
     const domain = domains[Math.floor(Math.random() * domains.length)];
-    return `${fn}${ln}${num}@${domain}`;
+    return `${fn}${ln}${numStr}@${domain}`;
   },
 
   /**

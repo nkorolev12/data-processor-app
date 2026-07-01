@@ -78,7 +78,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 8px; /* Reduced from 20px because note is below */
+}
+
+.chart-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-style: italic;
 }
 
 .chart-header h3 {
