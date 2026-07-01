@@ -1,6 +1,6 @@
 {
   "name": "data-processor",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Приложение для обработки данных",
   "main": "main.js",
   "author": "nkorolev12",
@@ -21,8 +21,7 @@
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ],
       "icon": "build/icon.ico"
     },
