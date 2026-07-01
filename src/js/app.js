@@ -5,22 +5,29 @@ const App = {
   businessFulls: [],
   readyFulls: [],
 
+  // Track which cards are in inline-edit mode (email / phone)
+  _emailEditIds: new Set(),
+  _phoneEditIds: new Set(),
+
   /* ── Init ──────────────────────────────────────────────── */
 
   async init() {
+    // Init themes/zoom first so there's no flash
+    ThemeManager.init();
+
     // Set version
     try {
       const version = await window.electronAPI.getAppVersion();
       const versionEl = document.getElementById('app-version');
-      if (versionEl && version) {
-        versionEl.textContent = `v${version}`;
-      }
+      if (versionEl && version) versionEl.textContent = `v${version}`;
     } catch (e) { console.error('Failed to load version'); }
 
     // Load data
-    this.personalFulls = await DataStorage.loadPersonalFulls();
-    this.businessFulls = await DataStorage.loadBusinessFulls();
-    this.readyFulls    = await DataStorage.loadReadyFulls();
+    [this.personalFulls, this.businessFulls, this.readyFulls] = await Promise.all([
+      DataStorage.loadPersonalFulls(),
+      DataStorage.loadBusinessFulls(),
+      DataStorage.loadReadyFulls(),
+    ]);
 
     this.renderList('personal');
     this.renderList('business');
@@ -102,7 +109,8 @@ const App = {
     const unused  = items.filter(i => !i.used).length;
 
     countEl.textContent = `${unused} / ${items.length}`;
-    listEl.innerHTML = '';
+
+    const frag = document.createDocumentFragment();
 
     items.forEach((item, idx) => {
       const row = document.createElement('div');
@@ -125,8 +133,11 @@ const App = {
         this.removeItem(type, idx);
       });
 
-      listEl.appendChild(row);
+      frag.appendChild(row);
     });
+
+    listEl.innerHTML = '';
+    listEl.appendChild(frag);
   },
 
   async removeItem(type, index) {
@@ -160,7 +171,6 @@ const App = {
 
     submitBtn.addEventListener('click', () => this.createManualCard());
 
-    // Submit on Ctrl+Enter inside modal
     modal.addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.ctrlKey) this.createManualCard();
       if (e.key === 'Escape') close();
@@ -230,7 +240,6 @@ const App = {
     const idx = this.readyFulls.findIndex(f => f.id === fullId);
     if (idx === -1) return;
 
-    // Un-mark the personal and business as used so they become available again
     const full = this.readyFulls[idx];
     if (!full.isManual) {
       const p = this.personalFulls.find(x => x.id === full.personal.id);
@@ -240,6 +249,9 @@ const App = {
       const b = this.businessFulls.find(x => x.id === full.business.id);
       if (b) b.used = false;
     }
+
+    this._emailEditIds.delete(fullId);
+    this._phoneEditIds.delete(fullId);
 
     this.readyFulls.splice(idx, 1);
 
@@ -261,7 +273,6 @@ const App = {
 
     personal.used = true;
 
-    // Generate proxies based on state
     const stateCode  = personal.state;
     const coreProxy  = ProxyGenerator.generateCoreProxy(stateCode);
     const flashProxy = ProxyGenerator.generateFlashProxy(stateCode);
@@ -311,7 +322,7 @@ const App = {
     ]);
 
     this.renderList('business');
-    this.renderReadyFulls();
+    this._updateCard(fullId);
     DataUtils.showToast('Бизнес прикреплён ✅');
   },
 
@@ -328,6 +339,29 @@ const App = {
     DataUtils.showToast('Почта сохранена ✅');
   },
 
+  /* ── Save Phone ────────────────────────────────────────── */
+
+  async savePhone(fullId, phoneVal) {
+    const full = this.readyFulls.find(f => f.id === fullId);
+    if (!full) return;
+    full.personal.phone = phoneVal.trim();
+    await DataStorage.saveReadyFulls(this.readyFulls);
+    DataUtils.showToast('Телефон сохранён ✅');
+  },
+
+  /* ── Update single card in DOM (performance) ───────────── */
+
+  _updateCard(fullId) {
+    const full = this.readyFulls.find(f => f.id === fullId);
+    if (!full) { this.renderReadyFulls(); return; }
+    const index = this.readyFulls.indexOf(full);
+    const container = document.getElementById('ready-fulls-container');
+    const oldCard   = container.children[index];
+    if (!oldCard) { this.renderReadyFulls(); return; }
+    const newCard = this._buildCard(full, index);
+    container.replaceChild(newCard, oldCard);
+  },
+
   /* ── Render Ready Fulls ────────────────────────────────── */
 
   renderReadyFulls() {
@@ -339,9 +373,9 @@ const App = {
       return;
     }
 
-    this.readyFulls.forEach((full, i) => {
-      container.appendChild(this._buildCard(full, i));
-    });
+    const frag = document.createDocumentFragment();
+    this.readyFulls.forEach((full, i) => frag.appendChild(this._buildCard(full, i)));
+    container.appendChild(frag);
   },
 
   _buildCard(full, index) {
@@ -350,7 +384,7 @@ const App = {
 
     const card = document.createElement('div');
     card.className = 'result-card';
-    card.style.animationDelay = `${index * 0.05}s`;
+    card.style.animationDelay = `${index * 0.04}s`;
 
     // Status badge
     let badgeClass = '', badgeText = 'Новая';
@@ -358,13 +392,22 @@ const App = {
     if (full.status === 'pending')  { badgeClass = 'status-pending';  badgeText = 'Пендинг'; }
     if (full.status === 'rejected') { badgeClass = 'status-rejected'; badgeText = 'Отказ'; }
 
+    // Phone section (inline edit)
+    const isEditingPhone = this._phoneEditIds.has(full.id);
+    const phoneDisplay = isEditingPhone
+      ? `<input class="inline-edit-input" id="phone-edit-${full.id}" value="${this._esc(p.phone || '')}" placeholder="(817) 630-6868">
+         <button class="btn-save-phone" data-full-id="${full.id}">✓</button>
+         <button class="btn-cancel-phone" data-full-id="${full.id}">✗</button>`
+      : `<span>${p.phone ? this._esc(p.phone) : '<span class="text-empty">не указан</span>'}${p.extra ? ', ' + this._esc(p.extra) : ''}</span>
+         <button class="btn-edit-phone" title="Редактировать телефон" data-full-id="${full.id}">✏️</button>`;
+
     // Business section HTML
     const businessHTML = b
       ? `<div class="card-data-section business-section">
            <div class="section-label">🏢 Бизнес</div>
            <div class="data-line"><span class="data-icon">🏢</span> ${this._esc(b.companyName.replace(/,/g, ''))}</div>
            <div class="data-line"><span class="data-icon">🔢</span> ${this._esc(b.ein)}</div>
-           <div class="data-line"><span class="data-icon">📅</span> ${this._esc(b.date)}</div>
+           <div class="data-line"><span class="data-icon">📅</span> <span class="date-formatted">${this._formatDate(b.date)}</span></div>
          </div>`
       : `<div class="card-data-section business-empty">
            <button class="btn-attach-business" data-full-id="${full.id}">
@@ -372,14 +415,16 @@ const App = {
            </button>
          </div>`;
 
-    // Email section HTML
+    // Email section HTML (with pre-fill on edit)
     const emailInputId   = `email-input-${full.id}`;
     const emailPassId    = `email-pass-${full.id}`;
-    const hasEmail       = full.manualEmail;
+    const hasEmail       = !!full.manualEmail;
+    const isEditingEmail = this._emailEditIds.has(full.id);
+
     const emailSectionHTML = `
       <div class="card-data-section email-section">
         <div class="section-label">📧 Почта</div>
-        ${hasEmail
+        ${(hasEmail && !isEditingEmail)
           ? `<div class="data-line email-display">
                <span class="data-icon">📧</span>
                <span class="email-value">${this._esc(full.manualEmail)}${full.manualEmailPassword ? ':' + this._esc(full.manualEmailPassword) : ''}</span>
@@ -388,12 +433,15 @@ const App = {
           : `<div class="email-input-group">
                <input type="text" id="${emailInputId}" class="email-inline-input" placeholder="email@example.com" value="${this._esc(full.manualEmail || '')}">
                <input type="text" id="${emailPassId}"  class="email-inline-input" placeholder="пароль" value="${this._esc(full.manualEmailPassword || '')}">
-               <button class="btn-save-email" data-full-id="${full.id}">Сохранить</button>
+               <div class="email-btn-row">
+                 <button class="btn-save-email" data-full-id="${full.id}">Сохранить</button>
+                 ${hasEmail ? `<button class="btn-cancel-email" data-full-id="${full.id}">Отмена</button>` : ''}
+               </div>
              </div>`
         }
       </div>`;
 
-    // Reference number section (shown only when status is pending)
+    // Reference number section
     const refInputId = `ref-input-${full.id}`;
     const referenceHTML = full.status === 'pending'
       ? `<div class="card-data-section reference-section">
@@ -424,12 +472,18 @@ const App = {
 
         <div class="card-data-section">
           <div class="section-label">👤 Персональные данные</div>
-          <div class="data-line"><span class="data-icon">📅</span> ${this._esc(p.dob)}</div>
+          <div class="data-line dob-line">
+            <span class="data-icon">📅</span>
+            <span class="date-formatted">${this._formatDate(p.dob)}</span>
+          </div>
           <div class="data-line"><span class="data-icon">🔑</span> ${this._esc(p.ssn)}</div>
           <div class="data-line"><span class="data-icon">👤</span> ${this._esc(p.firstName)} ${this._esc(p.lastName)}</div>
           <div class="data-line"><span class="data-icon">📍</span> ${this._esc(p.address)}, ${this._esc(p.city)}, ${this._esc(p.zip)}, ${this._esc(p.state)}</div>
           <div class="data-line"><span class="data-icon">📧</span> ${this._esc(p.email)}</div>
-          <div class="data-line"><span class="data-icon">📞</span> ${this._esc(p.phone)}${p.extra ? ', ' + this._esc(p.extra) : ''}</div>
+          <div class="data-line phone-line">
+            <span class="data-icon">📞</span>
+            ${phoneDisplay}
+          </div>
         </div>
 
         ${businessHTML}
@@ -478,8 +532,34 @@ const App = {
 
     // ── Attach business button
     const attachBtn = card.querySelector('.btn-attach-business');
-    if (attachBtn) {
-      attachBtn.addEventListener('click', () => this.attachBusiness(full.id));
+    if (attachBtn) attachBtn.addEventListener('click', () => this.attachBusiness(full.id));
+
+    // ── Phone edit button
+    const editPhoneBtn = card.querySelector('.btn-edit-phone');
+    if (editPhoneBtn) {
+      editPhoneBtn.addEventListener('click', () => {
+        this._phoneEditIds.add(full.id);
+        this._updateCard(full.id);
+      });
+    }
+
+    // ── Phone save button
+    const savePhoneBtn = card.querySelector('.btn-save-phone');
+    if (savePhoneBtn) {
+      savePhoneBtn.addEventListener('click', () => {
+        const val = card.querySelector(`#phone-edit-${full.id}`).value;
+        this._phoneEditIds.delete(full.id);
+        this.savePhone(full.id, val).then(() => this._updateCard(full.id));
+      });
+    }
+
+    // ── Phone cancel button
+    const cancelPhoneBtn = card.querySelector('.btn-cancel-phone');
+    if (cancelPhoneBtn) {
+      cancelPhoneBtn.addEventListener('click', () => {
+        this._phoneEditIds.delete(full.id);
+        this._updateCard(full.id);
+      });
     }
 
     // ── Save email button
@@ -488,17 +568,26 @@ const App = {
       saveEmailBtn.addEventListener('click', () => {
         const emailVal = card.querySelector(`#${emailInputId}`).value;
         const passVal  = card.querySelector(`#${emailPassId}`).value;
-        this.saveManualEmail(full.id, emailVal, passVal).then(() => this.renderReadyFulls());
+        this._emailEditIds.delete(full.id);
+        this.saveManualEmail(full.id, emailVal, passVal).then(() => this._updateCard(full.id));
       });
     }
 
-    // ── Edit email button
+    // ── Cancel email edit button (pre-filled, keep existing data)
+    const cancelEmailBtn = card.querySelector('.btn-cancel-email');
+    if (cancelEmailBtn) {
+      cancelEmailBtn.addEventListener('click', () => {
+        this._emailEditIds.delete(full.id);
+        this._updateCard(full.id);
+      });
+    }
+
+    // ── Edit email button (opens inputs pre-filled with existing data)
     const editEmailBtn = card.querySelector('.btn-edit-email');
     if (editEmailBtn) {
       editEmailBtn.addEventListener('click', () => {
-        full.manualEmail         = '';
-        full.manualEmailPassword = '';
-        this.renderReadyFulls();
+        this._emailEditIds.add(full.id);
+        this._updateCard(full.id);
       });
     }
 
@@ -516,12 +605,12 @@ const App = {
     if (editRefBtn) {
       editRefBtn.addEventListener('click', () => {
         full.pendingCode = '';
-        this.renderReadyFulls();
+        this._updateCard(full.id);
       });
     }
 
-    // ── Copy button handlers
-    card.querySelectorAll('.btn-copy').forEach(btn => {
+    // ── Copy proxy buttons
+    card.querySelectorAll('.btn-copy[data-proxy-type]').forEach(btn => {
       btn.addEventListener('click', () => {
         const block = btn.closest('.proxy-block');
         const text  = block.querySelector('.proxy-text').textContent;
@@ -533,7 +622,7 @@ const App = {
       });
     });
 
-    // ── Refresh proxy button handlers
+    // ── Refresh proxy buttons
     card.querySelectorAll('.btn-refresh').forEach(btn => {
       btn.addEventListener('click', async () => {
         const type = btn.dataset.refreshType;
@@ -552,12 +641,12 @@ const App = {
       });
     });
 
-    // ── Status button handlers
+    // ── Status buttons
     card.querySelectorAll('.btn-status').forEach(btn => {
       btn.addEventListener('click', () => this.setStatus(full.id, btn.dataset.status));
     });
 
-    // ── Copy for TG button (pending or done)
+    // ── Copy for TG
     const tgBtn = card.querySelector('.btn-copy-tg');
     if (tgBtn) {
       tgBtn.addEventListener('click', () => {
@@ -582,18 +671,34 @@ const App = {
     return card;
   },
 
-  /* ── Clean Phone ──────────────────────────────────────── */
+  /* ── Format date for display ───────────────────────────── */
 
   /**
-   * Strips extra numbers/bank codes after the phone number.
-   * "(205) 903-1614, 8384586" → "(205) 903-1614"
-   * "(817) 630-6868" → "(817) 630-6868"
+   * Turns "1998-09-15" → "Год: 1998 | Мес: 09 | День: 15"
+   * Turns "09/15/1998" → "Год: 1998 | Мес: 09 | День: 15"
+   * Falls back to raw string if format is unknown.
    */
+  _formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const s = dateStr.trim();
+    const parts = s.split(/[-\/\.]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        return `Год: ${parts[0]} | Мес: ${parts[1]} | День: ${parts[2]}`;
+      } else if (parts[2].length === 4) {
+        // MM/DD/YYYY
+        return `Год: ${parts[2]} | Мес: ${parts[0]} | День: ${parts[1]}`;
+      }
+    }
+    return s;
+  },
+
+  /* ── Clean Phone ──────────────────────────────────────── */
+
   _cleanPhone(phone) {
     if (!phone) return '';
-    // Strip anything after a comma (bank codes, extra numbers)
     const noComma = phone.split(',')[0].trim();
-    // Also strip a trailing block of digits separated by space (e.g. "8384586")
     return noComma.replace(/\s+\d{5,}$/, '').trim();
   },
 
@@ -614,7 +719,6 @@ const App = {
     lines.push('');
     lines.push('');
 
-    // Business: remove commas from company name (TAIT ENTERPRISE, LLC → TAIT ENTERPRISE LLC)
     if (b) lines.push(b.raw.replace(/,/g, ''));
 
     if (full.manualEmail) {
@@ -641,11 +745,9 @@ const App = {
     lines.push(`${p.firstName} ${p.lastName} `);
     lines.push(`${p.address} ${p.city} ${p.zip} ${p.state}`);
     lines.push(`${p.email} `);
-    // Only the clean phone number — no extra bank codes
     lines.push(phone);
     lines.push('');
 
-    // Business: remove commas from company name (TAIT ENTERPRISE, LLC → TAIT ENTERPRISE LLC)
     if (b) lines.push(b.raw.replace(/,/g, ''));
 
     if (full.manualEmail) {
@@ -659,14 +761,12 @@ const App = {
     return lines.join('\n');
   },
 
-
   /* ── Set Status ────────────────────────────────────── */
 
   async setStatus(fullId, status) {
     const full = this.readyFulls.find(f => f.id === fullId);
     if (!full || full.status !== null) return;
 
-    // For pending — just mark as pending and re-render (pending code entered inline)
     full.status     = status;
     full.statusDate = DataUtils.getTodayDate();
 
@@ -684,7 +784,7 @@ const App = {
       DataStorage.saveReadyFulls(this.readyFulls)
     ]);
 
-    this.renderReadyFulls();
+    this._updateCard(fullId);
 
     const labels = { done: 'Сделано ✅', pending: 'Пендинг ⏳', rejected: 'Отказ ❌' };
     DataUtils.showToast(labels[status]);
@@ -697,7 +797,7 @@ const App = {
     if (!full) return;
     full.pendingCode = code.trim();
     await DataStorage.saveReadyFulls(this.readyFulls);
-    this.renderReadyFulls();
+    this._updateCard(fullId);
     DataUtils.showToast('Pending сохранён ✅');
   },
 

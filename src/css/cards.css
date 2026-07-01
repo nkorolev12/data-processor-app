@@ -239,14 +239,17 @@
 /* ── Email Input Group ─────────────────────────────────────── */
 .email-input-group {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
+}
+
+.email-btn-row {
+  display: flex;
+  gap: 8px;
 }
 
 .email-inline-input {
-  flex: 1;
-  min-width: 120px;
+  width: 100%;
   padding: 8px 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -286,6 +289,25 @@
   transform: scale(0.97);
 }
 
+.btn-cancel-email {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-cancel-email:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 /* ── Email Display (saved) ─────────────────────────────────── */
 .email-display {
   display: flex;
@@ -301,21 +323,89 @@
   word-break: break-all;
 }
 
-.btn-edit-email {
+.btn-edit-email,
+.btn-edit-phone {
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 3px 7px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   cursor: pointer;
   transition: all var(--transition);
+  opacity: 0;
 }
-.btn-edit-email:hover {
+.email-display:hover .btn-edit-email,
+.phone-line:hover .btn-edit-phone {
+  opacity: 1;
+}
+.btn-edit-email:hover,
+.btn-edit-phone:hover {
   background: var(--bg-secondary);
   color: var(--text-secondary);
   border-color: var(--border-hover);
+  opacity: 1;
+}
+
+/* ── Inline Phone Edit ─────────────────────────────────────── */
+.phone-line {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inline-edit-input {
+  padding: 5px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  outline: none;
+  min-width: 160px;
+  flex: 1;
+}
+
+.btn-save-phone,
+.btn-cancel-phone {
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.btn-save-phone {
+  background: var(--gradient);
+  border: none;
+  color: #fff;
+}
+.btn-cancel-phone {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.btn-cancel-phone:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* ── Date Formatted ────────────────────────────────────────── */
+.date-formatted {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.text-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8rem;
 }
 
 /* ── Reference Number Section ──────────────────────────────── */

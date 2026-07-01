@@ -36,12 +36,37 @@
         </button>
       </nav>
       <div class="header-spacer"></div>
+
+      <!-- ── Settings Button & Panel ── -->
+      <div class="settings-wrapper">
+        <button id="btn-settings" class="btn-settings" title="Настройки внешнего вида">⚙️</button>
+        <div id="settings-panel" class="settings-panel">
+          <div class="settings-section">
+            <div class="settings-label">🎨 Тема</div>
+            <div class="theme-grid">
+              <button class="theme-btn active" data-theme="dark-purple">🌑 Тёмная</button>
+              <button class="theme-btn" data-theme="ocean-blue">🌊 Синяя</button>
+              <button class="theme-btn" data-theme="matrix-green">🌿 Зелёная</button>
+              <button class="theme-btn" data-theme="sunset-orange">🌅 Закат</button>
+              <button class="theme-btn" data-theme="midnight">🌙 Полночь</button>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-label">🔍 Масштаб</div>
+            <div class="zoom-control">
+              <button id="zoom-decrease" class="zoom-btn">−</button>
+              <span id="zoom-value">100%</span>
+              <button id="zoom-increase" class="zoom-btn">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
 
     <!-- ── Processing Page ───────────────────────────────── -->
     <main id="page-processing" class="page active">
 
-      <!-- 3 Input Columns -->
+      <!-- 2 Input Columns -->
       <div class="columns-container">
         <!-- Personal Fulls -->
         <div class="column">
@@ -227,6 +252,7 @@
   <script src="js/proxy.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/themes.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/app.js"></script>
 </body>
