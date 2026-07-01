@@ -1,6 +1,6 @@
 {
   "name": "data-processor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Приложение для обработки данных",
   "main": "main.js",
   "author": "nkorolev12",
@@ -12,6 +12,7 @@
   "build": {
     "appId": "com.dataprocessor.app",
     "productName": "DataProcessor",
+    "icon": "build/icon.ico",
     "publish": {
       "provider": "github",
       "owner": "nkorolev12",
@@ -19,7 +20,18 @@
       "private": true
     },
     "win": {
-      "target": "portable"
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "directories": {
       "output": "dist"

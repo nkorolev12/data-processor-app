@@ -5,6 +5,20 @@ const fs = require('fs');
 
 let mainWindow;
 
+// ── Error Logging & Compatibility ─────────────────────────────
+
+// Отключаем аппаратное ускорение графики (частая причина тихого падения на других ПК)
+app.disableHardwareAcceleration();
+
+// Логируем все фатальные ошибки в файл
+const logPath = path.join(app.getPath('userData'), 'error.log');
+process.on('uncaughtException', (err) => {
+  fs.appendFileSync(logPath, `\n[${new Date().toISOString()}] UNCAUGHT: ${err.stack || err}\n`);
+});
+process.on('unhandledRejection', (reason) => {
+  fs.appendFileSync(logPath, `\n[${new Date().toISOString()}] UNHANDLED REJECTION: ${reason}\n`);
+});
+
 // ── Auto-updater config ───────────────────────────────────────
 
 autoUpdater.autoDownload = true;       // скачивает автоматически в фоне
@@ -73,9 +87,12 @@ function createWindow() {
     mainWindow.show();
 
     // Проверяем обновления через 3 секунды после запуска
-    // (только в production, не при разработке)
     if (app.isPackaged) {
-      setTimeout(() => autoUpdater.checkForUpdates(), 3000);
+      setTimeout(() => {
+        autoUpdater.checkForUpdates().catch(err => {
+          fs.appendFileSync(logPath, `\n[${new Date().toISOString()}] UPDATER ERROR: ${err.stack || err}\n`);
+        });
+      }, 3000);
     }
   });
 }
