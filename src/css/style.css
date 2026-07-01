@@ -62,6 +62,7 @@ body {
   color: var(--text-primary);
   overflow-x: hidden;
   min-height: 100vh;
+  overscroll-behavior: none;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────── */
@@ -333,13 +334,12 @@ body {
 
 
 .column {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
   transition: border-color var(--transition);
+  contain: layout style;
 }
 .column:hover {
   border-color: var(--border-hover);
@@ -460,9 +460,7 @@ body {
 
 /* ── Glass Card Utility ────────────────────────────────────── */
 .glass-card {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
@@ -529,18 +527,17 @@ body {
   box-shadow: none !important;
 }
 
-/* ── Modal Overlay ─────────────────────────────────────────── */
+/* ── Modal Overlay ───────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.82);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.15s ease;
 }
 
 .modal-box {
@@ -728,29 +725,10 @@ body {
   pointer-events: none;
 }
 
-/* shimmer sweep */
-.update-banner-glow::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.04),
-    transparent
-  );
-  animation: shimmerSweep 3s infinite;
-}
+/* shimmer removed for performance */
 
-@keyframes shimmerSweep {
-  0%   { left: -60%; }
-  100% { left: 160%; }
-}
 
-/* top accent line */
+/* top accent line — static gradient, no animation */
 .update-banner::before {
   content: '';
   position: absolute;
@@ -758,15 +736,7 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #7c3aed, #3b82f6, #7c3aed);
-  background-size: 200% 100%;
-  animation: gradientShift 2.5s ease infinite;
-}
-
-@keyframes gradientShift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  background: linear-gradient(90deg, #7c3aed, #3b82f6);
 }
 
 /* content row */
@@ -781,12 +751,13 @@ body {
 .update-banner-icon {
   font-size: 1.8rem;
   flex-shrink: 0;
-  animation: floatBob 2.5s ease-in-out infinite;
+  animation: floatBob 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes floatBob {
-  0%, 100% { transform: translateY(0);    }
-  50%       { transform: translateY(-4px); }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-3px); }
 }
 
 .update-banner-text {
@@ -859,12 +830,13 @@ body {
   box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
   transition: all 0.2s ease;
   letter-spacing: 0.02em;
-  animation: pulseSoft 2s ease-in-out infinite;
+  animation: pulseSoft 2.5s ease-in-out infinite;
+  will-change: opacity;
 }
 
 @keyframes pulseSoft {
-  0%, 100% { box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4); }
-  50%       { box-shadow: 0 4px 35px rgba(124, 58, 237, 0.7); }
+  0%, 100% { opacity: 1;    }
+  50%       { opacity: 0.82; }
 }
 
 .btn-install-update:hover {

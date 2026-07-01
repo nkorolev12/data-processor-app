@@ -7,8 +7,10 @@ let mainWindow;
 
 // ── Error Logging & Compatibility ─────────────────────────────
 
-// Отключаем аппаратное ускорение графики (частая причина тихого падения на других ПК)
-app.disableHardwareAcceleration();
+// GPU-safe flags (do NOT call disableHardwareAcceleration — causes lag)
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('enable-smooth-scrolling');
 
 // Логируем все фатальные ошибки в файл
 const logPath = path.join(app.getPath('userData'), 'error.log');

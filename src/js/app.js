@@ -165,7 +165,6 @@ const App = {
     items.forEach((item, idx) => {
       const row = document.createElement('div');
       row.className = `item-row${item.used ? ' used' : ''}`;
-      row.style.animationDelay = `${idx * 0.03}s`;
 
       let label = '';
       if (type === 'personal') label = `${item.firstName} ${item.lastName} — ${item.state}`;
@@ -434,7 +433,6 @@ const App = {
 
     const card = document.createElement('div');
     card.className = 'result-card';
-    card.style.animationDelay = `${index * 0.04}s`;
 
     // Status badge
     let badgeClass = '', badgeText = 'Новая';

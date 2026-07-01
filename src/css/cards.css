@@ -92,14 +92,12 @@
 
 /* ── Result Card ───────────────────────────────────────────── */
 .result-card {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  animation: slideUp 0.4s ease both;
   transition: border-color var(--transition), box-shadow var(--transition);
+  contain: layout style;
 }
 .result-card:hover {
   border-color: var(--border-hover);
