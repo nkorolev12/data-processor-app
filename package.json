@@ -1,6 +1,6 @@
 {
   "name": "data-processor",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Приложение для обработки данных",
   "main": "main.js",
   "author": "nkorolev12",
@@ -16,7 +16,8 @@
     "publish": {
       "provider": "github",
       "owner": "nkorolev12",
-      "repo": "data-processor-app"
+      "repo": "data-processor-app",
+      "releaseType": "release"
     },
     "win": {
       "target": [
