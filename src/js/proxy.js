@@ -4,23 +4,17 @@ const ProxyGenerator = {
 
   /** State code → full lowercase name (as used by proxy services) */
   STATE_MAP: {
-    'AL': 'alabama',       'AK': 'alaska',        'AZ': 'arizona',
-    'AR': 'arkansas',      'CA': 'california',     'CO': 'colorado',
-    'CT': 'connecticut',   'DE': 'delaware',       'FL': 'florida',
-    'GA': 'georgia',       'HI': 'hawaii',         'ID': 'idaho',
-    'IL': 'illinois',      'IN': 'indiana',        'IA': 'iowa',
-    'KS': 'kansas',        'KY': 'kentucky',       'LA': 'louisiana',
-    'ME': 'maine',         'MD': 'maryland',       'MA': 'massachusetts',
-    'MI': 'michigan',      'MN': 'minnesota',      'MS': 'mississippi',
-    'MO': 'missouri',      'MT': 'montana',        'NE': 'nebraska',
-    'NV': 'nevada',        'NH': 'newhampshire',   'NJ': 'newjersey',
-    'NM': 'newmexico',     'NY': 'newyork',        'NC': 'northcarolina',
-    'ND': 'northdakota',   'OH': 'ohio',           'OK': 'oklahoma',
-    'OR': 'oregon',        'PA': 'pennsylvania',   'RI': 'rhodeisland',
-    'SC': 'southcarolina', 'SD': 'southdakota',    'TN': 'tennessee',
-    'TX': 'texas',         'UT': 'utah',           'VT': 'vermont',
-    'VA': 'virginia',      'WA': 'washington',     'WV': 'westvirginia',
-    'WI': 'wisconsin',     'WY': 'wyoming',        'DC': 'districtofcolumbia'
+    'AK': 'alaska', 'AL': 'alabama', 'AR': 'arkansas', 'AZ': 'arizona', 'CA': 'california',
+    'CO': 'colorado', 'CT': 'connecticut', 'DC': 'washingtondc', 'DE': 'delaware', 'FL': 'florida',
+    'GA': 'georgia', 'HI': 'hawaii', 'ID': 'idaho', 'IL': 'illinois', 'IN': 'indiana',
+    'IA': 'iowa', 'KS': 'kansas', 'KY': 'kentucky', 'LA': 'louisiana', 'MA': 'massachusetts',
+    'MD': 'maryland', 'ME': 'maine', 'MI': 'michigan', 'MN': 'minnesota', 'MO': 'missouri',
+    'MS': 'mississippi', 'MT': 'montana', 'NC': 'northcarolina', 'ND': 'northdakota',
+    'NE': 'nebraska', 'NH': 'newhampshire', 'NJ': 'newjersey', 'NM': 'newmexico',
+    'NV': 'nevada', 'NY': 'newyork', 'OH': 'ohio', 'OK': 'oklahoma', 'OR': 'oregon',
+    'PA': 'pennsylvania', 'RI': 'rhodeisland', 'SC': 'southcarolina', 'SD': 'southdakota',
+    'TN': 'tennessee', 'TX': 'texas', 'UT': 'utah', 'VA': 'virginia', 'VT': 'vermont',
+    'WA': 'washington', 'WI': 'wisconsin', 'WV': 'westvirginia', 'WY': 'wyoming'
   },
 
   /**
