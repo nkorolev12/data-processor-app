@@ -890,8 +890,15 @@ const App = {
    */
   _generateEmail(firstName, lastName) {
     const domains = ['outlook.com', 'gmail.com', 'yahoo.com', 'hotmail.com', 'icloud.com'];
-    const fn = (firstName || '').trim().split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
-    const ln = (lastName  || '').trim().split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+    
+    // Combine names to handle cases where everything is in firstName, or middle name is in lastName
+    const fullName = `${firstName || ''} ${lastName || ''}`.trim();
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    
+    // Get first word and last word (if only 1 word, use it for both or just first, let's use first and last)
+    let fn = parts.length > 0 ? parts[0].toLowerCase().replace(/[^a-z]/g, '') : '';
+    let ln = parts.length > 1 ? parts[parts.length - 1].toLowerCase().replace(/[^a-z]/g, '') : '';
+
     
     // Generate 1 to 4 random digits
     const digitsCount = Math.floor(Math.random() * 4) + 1;
