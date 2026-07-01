@@ -287,6 +287,28 @@
   transform: scale(0.97);
 }
 
+.btn-generate-email {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--accent-light);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-generate-email:hover {
+  background: rgba(124, 58, 237, 0.22);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.btn-generate-email:active {
+  transform: scale(0.97);
+}
+
 .btn-cancel-email {
   flex-shrink: 0;
   padding: 8px 14px;

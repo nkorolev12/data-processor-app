@@ -12,6 +12,8 @@ const ThemeManager = {
       '--accent-glow':    'rgba(124, 58, 237, 0.35)',
       '--gradient':       'linear-gradient(135deg, #7c3aed, #3b82f6)',
       '--gradient-hover': 'linear-gradient(135deg, #8b5cf6, #60a5fa)',
+      '--btn-create-bg':  'linear-gradient(135deg, #7c3aed, #3b82f6)',
+      '--btn-create-opacity': '1',
     },
     'ocean-blue': {
       '--bg-primary':     '#040d18',
@@ -22,6 +24,8 @@ const ThemeManager = {
       '--accent-glow':    'rgba(14, 165, 233, 0.35)',
       '--gradient':       'linear-gradient(135deg, #0ea5e9, #6366f1)',
       '--gradient-hover': 'linear-gradient(135deg, #38bdf8, #818cf8)',
+      '--btn-create-bg':  'linear-gradient(135deg, #0369a1, #4338ca)',
+      '--btn-create-opacity': '0.82',
     },
     'matrix-green': {
       '--bg-primary':     '#030a03',
@@ -32,6 +36,8 @@ const ThemeManager = {
       '--accent-glow':    'rgba(34, 197, 94, 0.35)',
       '--gradient':       'linear-gradient(135deg, #16a34a, #22c55e)',
       '--gradient-hover': 'linear-gradient(135deg, #22c55e, #4ade80)',
+      '--btn-create-bg':  'linear-gradient(135deg, #166534, #15803d)',
+      '--btn-create-opacity': '0.82',
     },
     'sunset-orange': {
       '--bg-primary':     '#0f0806',
@@ -42,6 +48,8 @@ const ThemeManager = {
       '--accent-glow':    'rgba(249, 115, 22, 0.35)',
       '--gradient':       'linear-gradient(135deg, #f97316, #ec4899)',
       '--gradient-hover': 'linear-gradient(135deg, #fb923c, #f472b6)',
+      '--btn-create-bg':  'linear-gradient(135deg, #c2410c, #9d174d)',
+      '--btn-create-opacity': '0.82',
     },
     'midnight': {
       '--bg-primary':     '#050507',
@@ -52,14 +60,52 @@ const ThemeManager = {
       '--accent-glow':    'rgba(100, 116, 139, 0.35)',
       '--gradient':       'linear-gradient(135deg, #475569, #64748b)',
       '--gradient-hover': 'linear-gradient(135deg, #64748b, #94a3b8)',
+      '--btn-create-bg':  'linear-gradient(135deg, #334155, #475569)',
+      '--btn-create-opacity': '1',
+    },
+    'rose': {
+      '--bg-primary':     '#0f080d',
+      '--bg-secondary':   '#1a0d15',
+      '--bg-surface':     '#22101c',
+      '--accent':         '#e11d48',
+      '--accent-light':   '#fb7185',
+      '--accent-glow':    'rgba(225, 29, 72, 0.35)',
+      '--gradient':       'linear-gradient(135deg, #be123c, #e11d48)',
+      '--gradient-hover': 'linear-gradient(135deg, #e11d48, #fb7185)',
+      '--btn-create-bg':  'linear-gradient(135deg, #9f1239, #be123c)',
+      '--btn-create-opacity': '0.82',
+    },
+    'nord': {
+      '--bg-primary':     '#060c12',
+      '--bg-secondary':   '#0d1520',
+      '--bg-surface':     '#131e2e',
+      '--accent':         '#5e81ac',
+      '--accent-light':   '#81a1c1',
+      '--accent-glow':    'rgba(94, 129, 172, 0.35)',
+      '--gradient':       'linear-gradient(135deg, #4c6a8c, #5e81ac)',
+      '--gradient-hover': 'linear-gradient(135deg, #5e81ac, #81a1c1)',
+      '--btn-create-bg':  'linear-gradient(135deg, #3b5470, #4c6a8c)',
+      '--btn-create-opacity': '0.82',
+    },
+    'cyber': {
+      '--bg-primary':     '#04080f',
+      '--bg-secondary':   '#060e1a',
+      '--bg-surface':     '#091525',
+      '--accent':         '#facc15',
+      '--accent-light':   '#fde047',
+      '--accent-glow':    'rgba(250, 204, 21, 0.3)',
+      '--gradient':       'linear-gradient(135deg, #ca8a04, #facc15)',
+      '--gradient-hover': 'linear-gradient(135deg, #facc15, #fde047)',
+      '--btn-create-bg':  'linear-gradient(135deg, #a16207, #ca8a04)',
+      '--btn-create-opacity': '0.85',
     },
   },
 
-  zoomLevels: [75, 90, 100, 110, 125, 150],
+  zoomLevels: [75, 90, 110, 125, 150, 175],
 
   init() {
     const savedTheme = localStorage.getItem('dp-theme') || 'dark-purple';
-    const savedZoom  = parseInt(localStorage.getItem('dp-zoom') || '100', 10);
+    const savedZoom  = parseInt(localStorage.getItem('dp-zoom') || '110', 10);
     this.applyTheme(savedTheme, false);
     this.applyZoom(savedZoom, false);
     this._setupPanel();
@@ -81,7 +127,6 @@ const ThemeManager = {
     if (save) localStorage.setItem('dp-zoom', String(percent));
     const el = document.getElementById('zoom-value');
     if (el) el.textContent = `${percent}%`;
-    // enable/disable +/- buttons
     const decBtn = document.getElementById('zoom-decrease');
     const incBtn = document.getElementById('zoom-increase');
     if (decBtn) decBtn.disabled = percent <= this.zoomLevels[0];

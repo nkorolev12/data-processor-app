@@ -58,11 +58,43 @@ function getDataDir() {
 
 // ── Window ────────────────────────────────────────────────────
 
+const winStatePath = path.join(app.getPath('userData'), 'window-state.json');
+
+function loadWinState() {
+  try {
+    if (fs.existsSync(winStatePath)) {
+      const s = JSON.parse(fs.readFileSync(winStatePath, 'utf-8'));
+      // Make sure window fits on screen
+      const { screen } = require('electron');
+      const display = screen.getDisplayNearestPoint({ x: s.x, y: s.y });
+      const b = display.workArea;
+      if (s.x >= b.x && s.y >= b.y &&
+          s.x + s.width <= b.x + b.width &&
+          s.y + s.height <= b.y + b.height) {
+        return s;
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+function saveWinState() {
+  try {
+    if (!mainWindow || mainWindow.isMinimized() || mainWindow.isMaximized()) return;
+    const b = mainWindow.getBounds();
+    fs.writeFileSync(winStatePath, JSON.stringify(b), 'utf-8');
+  } catch (_) {}
+}
+
 function createWindow() {
+  const saved = loadWinState();
+
   mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 920,
-    minWidth: 1100,
+    width:     saved?.width  || 1440,
+    height:    saved?.height || 920,
+    x:         saved?.x,
+    y:         saved?.y,
+    minWidth:  1100,
     minHeight: 700,
     backgroundColor: '#0a0a0f',
     show: false,
@@ -76,6 +108,12 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
   mainWindow.setMenuBarVisibility(false);
 
+  // Save position/size on every change
+  ['move', 'resize'].forEach(ev => mainWindow.on(ev, saveWinState));
+
+  // Restore maximized state
+  if (saved?.maximized) mainWindow.maximize();
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
 
@@ -87,6 +125,12 @@ function createWindow() {
         });
       }, 3000);
     }
+  });
+
+  mainWindow.on('close', () => {
+    const b = mainWindow.getBounds();
+    b.maximized = mainWindow.isMaximized();
+    try { fs.writeFileSync(winStatePath, JSON.stringify(b), 'utf-8'); } catch (_) {}
   });
 }
 

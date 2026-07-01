@@ -482,6 +482,7 @@ const App = {
                <input type="text" id="${emailInputId}" class="email-inline-input" placeholder="email@example.com" value="${this._esc(full.manualEmail || '')}">
                <input type="text" id="${emailPassId}"  class="email-inline-input" placeholder="пароль" value="${this._esc(full.manualEmailPassword || '')}">
                <div class="email-btn-row">
+                 <button class="btn-generate-email" data-full-id="${full.id}">🎲 Генерировать</button>
                  <button class="btn-save-email" data-full-id="${full.id}">Сохранить</button>
                  ${hasEmail ? `<button class="btn-cancel-email" data-full-id="${full.id}">Отмена</button>` : ''}
                </div>
@@ -636,6 +637,17 @@ const App = {
       editEmailBtn.addEventListener('click', () => {
         this._emailEditIds.add(full.id);
         this._updateCard(full.id);
+      });
+    }
+
+    // ── Generate email button
+    const genEmailBtn = card.querySelector('.btn-generate-email');
+    if (genEmailBtn) {
+      genEmailBtn.addEventListener('click', () => {
+        const emailInput = card.querySelector(`#${emailInputId}`);
+        const passInput  = card.querySelector(`#${emailPassId}`);
+        if (emailInput) emailInput.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
+        if (passInput)  passInput.value  = this._generatePassword();
       });
     }
 
@@ -850,6 +862,31 @@ const App = {
   },
 
   /* ── Helpers ───────────────────────────────────────────── */
+
+  /**
+   * Generates email like jennaspahn723@outlook.com
+   * firstName + lastName (lowercase, no spaces) + 3 random digits + @domain
+   */
+  _generateEmail(firstName, lastName) {
+    const domains = ['outlook.com', 'gmail.com', 'yahoo.com', 'hotmail.com', 'icloud.com'];
+    const fn = (firstName || '').toLowerCase().replace(/[^a-z]/g, '');
+    const ln = (lastName  || '').toLowerCase().replace(/[^a-z]/g, '');
+    const num = Math.floor(100 + Math.random() * 900); // 3 digits: 100-999
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    return `${fn}${ln}${num}@${domain}`;
+  },
+
+  /**
+   * Generates a random 10-character password with letters and digits
+   */
+  _generatePassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+      pass += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return pass;
+  },
 
   _esc(str) {
     if (!str) return '';

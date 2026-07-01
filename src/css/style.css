@@ -110,6 +110,14 @@ body {
   filter: drop-shadow(0 0 8px var(--accent-glow));
 }
 
+.logo-icon-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
 .logo-text {
   font-size: 1.25rem;
   font-weight: 700;
@@ -421,34 +429,37 @@ body {
   color: var(--accent-light);
 }
 
-/* ── Create Section ────────────────────────────────────────── */
+/* ── Create Section ──────────────────────────────────────── */
 .create-section {
   display: flex;
   justify-content: center;
-  margin-bottom: 36px;
+  gap: 12px;
+  margin-bottom: 32px;
 }
 
 .btn-create {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 48px;
-  background: var(--gradient);
+  gap: 8px;
+  padding: 12px 32px;
+  background: var(--btn-create-bg, var(--gradient));
   border: none;
   border-radius: var(--radius-xl);
   color: #fff;
   font-family: inherit;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   cursor: pointer;
-  box-shadow: var(--shadow-glow), var(--shadow-md);
+  opacity: var(--btn-create-opacity, 1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   transition: all var(--transition);
 }
 .btn-create:hover {
   background: var(--gradient-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 0 50px var(--accent-glow), var(--shadow-lg);
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4);
 }
 .btn-create:active {
   transform: translateY(0) scale(0.98);
