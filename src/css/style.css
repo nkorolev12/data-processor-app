@@ -119,6 +119,18 @@ body {
   letter-spacing: -0.02em;
 }
 
+.app-version-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  margin-left: 8px;
+  user-select: none;
+}
+
 .header-spacer {
   flex: 1;
 }

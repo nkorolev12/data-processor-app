@@ -8,6 +8,18 @@ const App = {
   /* ── Init ──────────────────────────────────────────────── */
 
   async init() {
+    this._bindEvents();
+    
+    // Set version
+    try {
+      const version = await window.electronAPI.getAppVersion();
+      const versionEl = document.getElementById('app-version');
+      if (versionEl && version) {
+        versionEl.textContent = `v${version}`;
+      }
+    } catch (e) { console.error('Failed to load version'); }
+
+    // Load data
     this.personalFulls = await DataStorage.loadPersonalFulls();
     this.businessFulls = await DataStorage.loadBusinessFulls();
     this.readyFulls    = await DataStorage.loadReadyFulls();
