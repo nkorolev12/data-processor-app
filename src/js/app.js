@@ -89,6 +89,23 @@ const App = {
     });
 
     laterBtn.addEventListener('click', hide);
+    window.electronAPI.onUpdateNotAvailable(() => {
+      if (this._isCheckingManual) {
+        DataUtils.showToast('Установлена последняя версия ✓');
+        this._isCheckingManual = false;
+      }
+    });
+
+    const versionEl = document.getElementById('app-version');
+    if (versionEl) {
+      versionEl.style.cursor = 'pointer';
+      versionEl.title = 'Проверить обновления';
+      versionEl.addEventListener('click', () => {
+        this._isCheckingManual = true;
+        DataUtils.showToast('Поиск обновлений...');
+        window.electronAPI.checkForUpdates();
+      });
+    }
   },
 
   /* ── Tab Navigation ────────────────────────────────────── */
@@ -96,6 +113,10 @@ const App = {
   setupTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (btn.classList.contains('active')) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');

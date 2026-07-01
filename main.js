@@ -38,12 +38,24 @@ autoUpdater.on('update-downloaded', () => {
   if (mainWindow) mainWindow.webContents.send('update-downloaded');
 });
 
+autoUpdater.on('update-not-available', () => {
+  if (mainWindow) mainWindow.webContents.send('update-not-available');
+});
+
 autoUpdater.on('error', (err) => {
   console.error('AutoUpdater error:', err);
 });
 
 ipcMain.on('install-update', () => {
   autoUpdater.quitAndInstall();
+});
+
+ipcMain.on('check-for-updates', () => {
+  if (app.isPackaged) {
+    autoUpdater.checkForUpdates().catch(err => {
+      fs.appendFileSync(logPath, `\n[${new Date().toISOString()}] UPDATER ERROR: ${err.stack || err}\n`);
+    });
+  }
 });
 
 // ── Data Directory ────────────────────────────────────────────

@@ -52,8 +52,10 @@ async function main() {
     const uploadUrlBase = release.upload_url.split('{')[0];
     
     for (const file of missingFiles) {
-      const localPath = path.join(__dirname, '../dist', file);
-      console.log(`\n-> Fixing missing file: ${file}`);
+      // GitHub replaces spaces with dashes, so local files have spaces
+      const localFileName = file.replace('DataProcessor-Setup-', 'DataProcessor Setup ');
+      const localPath = path.join(__dirname, '../dist', localFileName);
+      console.log(`\n-> Fixing missing file: ${file} (Local: ${localFileName})`);
       
       if (!fs.existsSync(localPath)) {
         console.log(`   [ERROR] Local file not found: ${localPath}`);
