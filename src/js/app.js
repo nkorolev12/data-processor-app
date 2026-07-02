@@ -37,6 +37,7 @@ const App = {
     this.setupAddButtons();
     this.setupCreateButton();
     this.setupManualCreate();
+    this.setupSecondaryModal();
 
     await DashboardManager.init();
 
@@ -599,24 +600,45 @@ const App = {
       return '🆕';
     };
 
-    const secondaryBlockHTML = (full.status === 'done' && full.parentId === null)
-      ? `<div class="secondary-block">
-           <div class="secondary-block-header">
-             <span class="secondary-block-title">🔁 Вторяки</span>
-             <span class="secondary-count">${secondaryCount}/4</span>
-           </div>
-           ${secondaryCount > 0 ? `<div class="secondary-list">${secondaries.map(s =>
-             `<div class="secondary-item" data-scroll-to="${s.id}">
-                <span class="secondary-item-icon">${statusIcon(s.status)}</span>
-                <span class="secondary-item-name">Вторяк ${s.secondaryIndex}</span>
-                <span class="secondary-item-status">${s.status ? ({done:'Сделано',pending:'Пендинг',rejected:'Отказ'}[s.status]) : 'Новая'}</span>
-              </div>`
-           ).join('')}</div>` : ''}
-           ${canAddMore
-             ? `<button class="btn-create-secondary" data-parent-id="${full.id}">＋ Создать вторяк</button>`
-             : `<div class="secondary-max-note">Максимум 4 вторяка достигнут</div>`
-           }
-         </div>`
+    // Secondary block — rich 4-slot panel shown when parent card is done
+    const secondaryBlockHTML = (full.status === 'done' && (full.parentId === null || full.parentId === undefined))
+      ? (() => {
+          const slots = [1, 2, 3, 4].map(i => {
+            const sec = secondaries.find(s => s.secondaryIndex === i);
+            if (sec) {
+              // Already created
+              const ic   = statusIcon(sec.status);
+              const lbl  = sec.status ? ({done:'Сделано',pending:'Пендинг',rejected:'Отказ'}[sec.status]) : 'Новая';
+              return `<div class="v-slot v-slot-done" data-scroll-to="${sec.id}">
+                <div class="v-slot-num">${i}</div>
+                <div class="v-slot-label">Вторяк ${i}</div>
+                <div class="v-slot-status">${ic} ${lbl}</div>
+              </div>`;
+            } else if (i === secondaryCount + 1) {
+              // Next available slot
+              return `<div class="v-slot v-slot-available">
+                <div class="v-slot-num">${i}</div>
+                <div class="v-slot-label">Вторяк ${i}</div>
+                <button class="btn-create-secondary btn-v-slot" data-parent-id="${full.id}">⊕ Создать</button>
+              </div>`;
+            } else {
+              // Locked slot
+              return `<div class="v-slot v-slot-locked">
+                <div class="v-slot-num">${i}</div>
+                <div class="v-slot-label">Вторяк ${i}</div>
+                <div class="v-slot-lock">🔒</div>
+              </div>`;
+            }
+          }).join('');
+
+          return `<div class="secondary-block">
+            <div class="secondary-block-header">
+              <span class="secondary-block-title">🔁 Вторяки</span>
+              <span class="secondary-count-badge">${secondaryCount}/4 создано</span>
+            </div>
+            <div class="v-slots-grid">${slots}</div>
+          </div>`;
+        })()
       : '';
 
     card.innerHTML = `
@@ -1043,8 +1065,77 @@ const App = {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  },
+
+  /* ── Secondary Modal ───────────────────────────────────── */
+
+  setupSecondaryModal() {
+    const modal     = document.getElementById('modal-secondary');
+    const closeBtn  = document.getElementById('secondary-modal-close');
+    closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+  },
+
+  showSecondaryModal(fullId) {
+    const modal      = document.getElementById('modal-secondary');
+    const slotsEl    = document.getElementById('secondary-modal-slots');
+    const titleEl    = document.getElementById('secondary-modal-title');
+    const descEl     = document.getElementById('secondary-modal-desc');
+
+    const full = this.readyFulls.find(f => f.id === fullId);
+    if (!full) return;
+
+    const existingCount = this.readyFulls.filter(f => f.parentId === fullId).length;
+    const remaining = 4 - existingCount;
+
+    titleEl.textContent = `Аккаунт зарегистрирован! ${full.personal.firstName} ${full.personal.lastName}`;
+    descEl.textContent  = remaining > 0
+      ? `Доступно создание вторяка${remaining > 1 ? 'ов' : 'а'} (${remaining} из 4)`
+      : 'Все 4 вторяка уже созданы';
+
+    slotsEl.innerHTML = '';
+
+    for (let i = 1; i <= 4; i++) {
+      const isCreated = i <= existingCount;
+      const isNext    = i === existingCount + 1;
+      const canCreate = remaining > 0 && isNext;
+
+      const slot = document.createElement('div');
+      slot.className = `secondary-slot ${isCreated ? 'slot-created' : ''} ${canCreate ? 'slot-available' : ''} ${!isCreated && !canCreate ? 'slot-locked' : ''}`;
+
+      if (isCreated) {
+        const sec = this.readyFulls.find(f => f.parentId === fullId && f.secondaryIndex === i);
+        const statusIcon = sec?.status === 'done' ? '✅' : sec?.status === 'pending' ? '⏳' : sec?.status === 'rejected' ? '❌' : '🆕';
+        const statusText = sec?.status ? ({done:'Сделано',pending:'Пендинг',rejected:'Отказ'}[sec.status]) : 'Новая';
+        slot.innerHTML = `
+          <div class="slot-label">Вторяк ${i}</div>
+          <div class="slot-status">${statusIcon} ${statusText}</div>
+        `;
+      } else if (canCreate) {
+        slot.innerHTML = `
+          <div class="slot-label">Вторяк ${i}</div>
+          <button class="btn-slot-create" data-parent-id="${fullId}">⊕ Создать</button>
+        `;
+        slot.querySelector('.btn-slot-create').addEventListener('click', async () => {
+          await this.createSecondary(fullId);
+          modal.style.display = 'none';
+        });
+      } else {
+        slot.innerHTML = `
+          <div class="slot-label">Вторяк ${i}</div>
+          <div class="slot-locked-icon">🔒</div>
+        `;
+      }
+
+      slotsEl.appendChild(slot);
+    }
+
+    modal.style.display = 'flex';
   }
 };
 
 // ── Bootstrap ─────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+  App.setupSecondaryModal();
+});

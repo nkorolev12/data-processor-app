@@ -670,8 +670,8 @@
 
 /* ── Secondary Block (Вторяки) ─────────────────────────────── */
 .secondary-block {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(59, 130, 246, 0.04));
   border-radius: var(--radius-sm);
   padding: 14px 16px;
   margin-top: 12px;
@@ -681,100 +681,118 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .secondary-block-title {
   font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: var(--accent-light);
   letter-spacing: 0.03em;
 }
 
-.secondary-count {
-  font-size: 0.72rem;
+.secondary-count-badge {
+  font-size: 0.7rem;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.06);
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.2);
   padding: 2px 8px;
   border-radius: 99px;
   font-weight: 600;
 }
 
-.secondary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
+/* 4-slot grid */
+.v-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
-.secondary-item {
+.v-slot {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
+  gap: 5px;
+  padding: 10px 8px;
   border-radius: var(--radius-sm);
-  cursor: pointer;
+  text-align: center;
+  min-height: 80px;
+  justify-content: center;
   transition: all var(--transition);
 }
 
-.secondary-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+.v-slot-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.v-slot-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Created slot */
+.v-slot-done {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.v-slot-done:hover {
+  background: rgba(255, 255, 255, 0.09);
   border-color: var(--accent);
 }
-
-.secondary-item-icon {
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.secondary-item-name {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.secondary-item-status {
-  font-size: 0.72rem;
-  color: var(--text-muted);
+.v-slot-done .v-slot-num  { color: var(--text-primary); }
+.v-slot-done .v-slot-label { color: var(--text-muted); }
+.v-slot-status {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
-.btn-create-secondary {
-  width: 100%;
-  padding: 9px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed var(--border-hover);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+/* Available (next) slot */
+.v-slot-available {
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px dashed rgba(124, 58, 237, 0.45);
+  animation: pulseSlot 2.5s ease-in-out infinite;
+}
+@keyframes pulseSlot {
+  0%, 100% { border-color: rgba(124, 58, 237, 0.45); }
+  50%       { border-color: rgba(124, 58, 237, 0.85); }
+}
+.v-slot-available .v-slot-num   { color: var(--accent-light); }
+.v-slot-available .v-slot-label { color: var(--accent-light); opacity: 0.75; }
+
+.btn-v-slot {
+  margin-top: 2px;
+  padding: 4px 10px;
+  background: rgba(124, 58, 237, 0.18);
+  border: 1px solid rgba(124, 58, 237, 0.5);
+  border-radius: 99px;
+  color: var(--accent-light);
   font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--transition);
-  text-align: center;
-  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.btn-v-slot:hover {
+  background: rgba(124, 58, 237, 0.32);
+  transform: scale(1.04);
 }
 
-.btn-create-secondary:hover {
-  background: rgba(124, 58, 237, 0.1);
-  border-color: var(--accent);
-  color: var(--accent-light);
+/* Locked slot */
+.v-slot-locked {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  opacity: 0.45;
 }
-
-.btn-create-secondary:active {
-  transform: scale(0.98);
-}
-
-.secondary-max-note {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  padding: 8px;
-  font-style: italic;
-}
+.v-slot-locked .v-slot-num   { color: var(--text-muted); }
+.v-slot-locked .v-slot-label { color: var(--text-muted); }
+.v-slot-lock { font-size: 0.9rem; }
 
 /* ── Secondary Badge (in card header) ─────────────────────── */
 .secondary-badge {
