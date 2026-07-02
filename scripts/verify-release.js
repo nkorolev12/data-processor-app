@@ -21,18 +21,41 @@ async function main() {
 
   try {
     // 1. Fetch release info
-    const res = await fetch(`https://api.github.com/repos/${repo}/releases/tags/v${version}`, {
+    let res = await fetch(`https://api.github.com/repos/${repo}/releases/tags/v${version}`, {
       headers: {
         'User-Agent': 'NodeJS',
         'Authorization': `token ${token}`
       }
     });
 
-    if (!res.ok) {
+    let release;
+    if (res.status === 404) {
+      console.log(`Release v${version} not found. Creating it...`);
+      res = await fetch(`https://api.github.com/repos/${repo}/releases`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'NodeJS',
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tag_name: `v${version}`,
+          name: `v${version}`,
+          draft: false,
+          prerelease: false
+        })
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Failed to create release: ${res.status} ${txt}`);
+      }
+      release = await res.json();
+    } else if (!res.ok) {
       throw new Error(`Failed to fetch release: ${res.statusText}`);
+    } else {
+      release = await res.json();
     }
 
-    const release = await res.json();
     const assets = release.assets || [];
     const uploadedAssetNames = assets.map(a => a.name);
 
