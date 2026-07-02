@@ -740,10 +740,27 @@ const App = {
       <div class="card-header">
         <div class="card-title">
           <span class="card-number">#${(() => {
-            const todayCards = this.readyFulls.filter(f => this.isCurrentWorkDay(f.createdAt) && (f.parentId === null || f.parentId === undefined));
-            const todayIdx = todayCards.indexOf(full);
-            if (todayIdx !== -1) return todayCards.length - todayIdx;
-            return this.readyFulls.length - index;
+            const isSecondary = (full.parentId !== null && full.parentId !== undefined);
+            if (isSecondary) {
+              // Find parent's number among today's parents
+              const todayParents = this.readyFulls.filter(f =>
+                this.isCurrentWorkDay(f.createdAt) && (f.parentId === null || f.parentId === undefined)
+              );
+              const parent = todayParents.find(f => f.id === full.parentId);
+              const parentIdx = parent ? todayParents.indexOf(parent) : -1;
+              const parentNum = parentIdx !== -1 ? todayParents.length - parentIdx : '?';
+              return `${parentNum}-${full.secondaryIndex}`;
+            }
+            // Parent card: number among today's parent cards
+            const todayParents = this.readyFulls.filter(f =>
+              this.isCurrentWorkDay(f.createdAt) && (f.parentId === null || f.parentId === undefined)
+            );
+            const todayIdx = todayParents.indexOf(full);
+            if (todayIdx !== -1) return todayParents.length - todayIdx;
+            // Archive card: number among all parent cards
+            const allParents = this.readyFulls.filter(f => f.parentId === null || f.parentId === undefined);
+            const archIdx = allParents.indexOf(full);
+            return archIdx !== -1 ? allParents.length - archIdx : '?';
           })()}</span>
           <span class="card-name">${this._esc(p.firstName)} ${this._esc(p.lastName)}</span>
           ${full.secondaryIndex !== null && full.secondaryIndex !== undefined
