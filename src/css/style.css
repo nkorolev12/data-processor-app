@@ -885,3 +885,52 @@ body {
   color: rgba(255,255,255,0.7);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — Narrow window support
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 10px 16px;
+    gap: 12px;
+    margin-left: -16px;
+    margin-right: -16px;
+    flex-wrap: wrap;
+  }
+  .main-content { padding: 16px; }
+  .column-layout { gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .app-header { gap: 8px; padding: 8px 12px; margin-left: -12px; margin-right: -12px; }
+  .logo-text   { display: none; }
+  .main-content { padding: 10px; }
+
+  /* Tab labels hidden, only icons */
+  .tab-btn { padding: 8px 10px; }
+  .tab-label { display: none; }
+  .tab-icon  { font-size: 1rem; }
+
+  .ready-fulls-section { gap: 10px; }
+}
+
+@media (max-width: 360px) {
+  html { font-size: 13px; }
+  .app-header { padding: 6px 10px; margin-left: -10px; margin-right: -10px; gap: 6px; }
+  .main-content { padding: 8px; }
+  .logo-icon-img { width: 24px; height: 24px; }
+  .app-version-text { display: none; }
+
+  .tab-nav { padding: 3px; gap: 2px; border-radius: var(--radius-sm); }
+  .tab-btn { padding: 7px 8px; border-radius: var(--radius-sm); gap: 2px; }
+
+  .column-layout { flex-direction: column; gap: 10px; }
+}
+
+@media (max-width: 320px) {
+  html { font-size: 12px; }
+  .app-header { padding: 6px 8px; margin-left: -8px; margin-right: -8px; }
+  .main-content { padding: 6px; }
+  .tab-nav { padding: 2px; }
+  .tab-btn { padding: 6px 7px; }
+}

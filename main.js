@@ -106,8 +106,8 @@ function createWindow() {
     height:    saved?.height || 920,
     x:         saved?.x,
     y:         saved?.y,
-    minWidth:  1100,
-    minHeight: 700,
+    minWidth:  320,
+    minHeight: 500,
     backgroundColor: '#0a0a0f',
     show: false,
     webPreferences: {
