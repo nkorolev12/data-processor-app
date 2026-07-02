@@ -1,6 +1,6 @@
 {
   "name": "data-processor",
-  "version": "1.0.41",
+  "version": "1.0.42",
   "description": "Приложение для обработки данных",
   "main": "main.js",
   "author": "nkorolev12",
