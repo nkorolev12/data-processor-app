@@ -417,9 +417,8 @@ const App = {
       secondaryIndex:      existingCount + 1
     };
 
-    // Insert secondary right after parent card
-    const parentIdx = this.readyFulls.indexOf(parent);
-    this.readyFulls.splice(parentIdx + existingCount + 1, 0, secondary);
+    // Insert secondary at position 0 (top of list, newest first)
+    this.readyFulls.unshift(secondary);
 
     await Promise.all([
       DataStorage.saveBusinessFulls(this.businessFulls),
@@ -735,7 +734,12 @@ const App = {
     card.innerHTML = `
       <div class="card-header">
         <div class="card-title">
-          <span class="card-number">#${this.readyFulls.length - index}</span>
+          <span class="card-number">#${(() => {
+            const todayCards = this.readyFulls.filter(f => this.isCurrentWorkDay(f.createdAt) && (f.parentId === null || f.parentId === undefined));
+            const todayIdx = todayCards.indexOf(full);
+            if (todayIdx !== -1) return todayCards.length - todayIdx;
+            return this.readyFulls.length - index;
+          })()}</span>
           <span class="card-name">${this._esc(p.firstName)} ${this._esc(p.lastName)}</span>
           ${full.secondaryIndex !== null && full.secondaryIndex !== undefined
             ? `<span class="secondary-badge">Вторяк ${full.secondaryIndex}</span>`
@@ -871,10 +875,22 @@ const App = {
     const genEmailBtn = card.querySelector('.btn-generate-email');
     if (genEmailBtn) {
       genEmailBtn.addEventListener('click', () => {
-        const emailInput = card.querySelector(`#${emailInputId}`);
-        const passInput  = card.querySelector(`#${emailPassId}`);
-        if (emailInput) emailInput.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
-        if (passInput)  passInput.value  = this._generatePassword();
+        // If inputs are not yet visible (email not in edit mode), switch to edit mode first
+        let emailInput = card.querySelector(`#${emailInputId}`);
+        if (!emailInput) {
+          this._emailEditIds.add(full.id);
+          const newCard = this._buildCard(full, this.readyFulls.indexOf(full));
+          card.parentNode.replaceChild(newCard, card);
+          // After re-render, find and fill inputs in the new card
+          const ni = newCard.querySelector(`#${emailInputId}`);
+          const np = newCard.querySelector(`#${emailPassId}`);
+          if (ni) ni.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
+          if (np) np.value = this._generatePassword();
+          return;
+        }
+        emailInput.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
+        const passInput = card.querySelector(`#${emailPassId}`);
+        if (passInput) passInput.value = this._generatePassword();
       });
     }
 
