@@ -1048,3 +1048,77 @@
 .archive-cards {
   margin-top: 10px;
 }
+
+/* ── Secondaries Stats Bar ───────────────────────────────── */
+.sec-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface, #16161f);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sec-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.sec-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.sec-stat-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sec-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ── Responsive: narrow window support ───────────────────── */
+@media (max-width: 640px) {
+  .card-header { padding: 12px 14px; flex-wrap: wrap; gap: 6px; }
+  .card-body   { padding: 14px; }
+  .card-name   { font-size: 0.88rem; }
+
+  .v-slots-grid { grid-template-columns: repeat(2, 1fr); }
+  .sec-group-slots { grid-template-columns: repeat(2, 1fr); }
+
+  .email-btn-row { flex-wrap: wrap; }
+
+  .proxy-actions { flex-wrap: wrap; }
+
+  .card-footer   { flex-wrap: wrap; gap: 6px; }
+
+  .sec-group-header { flex-wrap: wrap; gap: 8px; }
+  .sec-stats-bar { flex-wrap: wrap; }
+  .sec-stat { flex: 1 1 calc(33% - 2px); padding: 10px 0; }
+}
+
+@media (max-width: 420px) {
+  .card-title { flex-wrap: wrap; gap: 6px; }
+  .sec-group-slots { grid-template-columns: repeat(2, 1fr); }
+  .tab-nav { gap: 2px; }
+  .tab-btn { padding: 8px 10px; font-size: 0.75rem; }
+  .tab-btn span:not(.tab-icon):not(.tab-badge) { display: none; }
+}

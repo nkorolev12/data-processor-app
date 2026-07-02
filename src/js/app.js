@@ -123,6 +123,8 @@ const App = {
         btn.classList.add('active');
         const page = document.getElementById(`page-${btn.dataset.tab}`);
         if (page) page.classList.add('active');
+        // Always scroll to top when switching tabs
+        window.scrollTo({ top: 0, behavior: 'instant' });
         if (btn.dataset.tab === 'dashboard') DashboardManager.refresh();
         if (btn.dataset.tab === 'secondaries') this.renderSecondaries();
       });
@@ -645,7 +647,9 @@ const App = {
                <span class="email-value">${this._esc(full.manualEmail)}${full.manualEmailPassword ? ':' + this._esc(full.manualEmailPassword) : ''}</span>
                <button class="btn-edit-email" data-full-id="${full.id}">✏️</button>
              </div>`
-          : `<div class="email-input-group">
+          : (full.status !== null && !hasEmail)
+            ? `<div class="data-line"><span class="data-icon">📧</span><span class="text-empty">не указана</span></div>`
+            : `<div class="email-input-group">
                <input type="text" id="${emailInputId}" class="email-inline-input" placeholder="email@example.com" value="${this._esc(full.manualEmail || '')}">
                <input type="text" id="${emailPassId}"  class="email-inline-input" placeholder="пароль" value="${this._esc(full.manualEmailPassword || '')}">
                <div class="email-btn-row">
@@ -669,9 +673,9 @@ const App = {
                   <button class="btn-edit-reference" data-full-id="${full.id}">✏️</button>
                 </div>`
              : `<div class="reference-input-group">
-                  <input type="text" id="${refInputId}" class="email-inline-input" placeholder="0159884397" value="">
-                  <button class="btn-save-reference" data-full-id="${full.id}">Сохранить</button>
-                </div>`
+                   <input type="text" id="${refInputId}" class="email-inline-input" placeholder="0159884397" value="">
+                   <button class="btn-save-email btn-save-reference" data-full-id="${full.id}">Сохранить</button>
+                 </div>`
            }
          </div>`
       : '';
@@ -1231,6 +1235,45 @@ const App = {
     const parents = this.readyFulls.filter(
       f => f.status === 'done' && (f.parentId === null || f.parentId === undefined)
     );
+
+    const allSecondaries = this.readyFulls.filter(f => f.parentId !== null && f.parentId !== undefined);
+    const totalSlots  = parents.length * 4;
+    const created     = allSecondaries.length;
+    const available   = totalSlots - created;
+    const secDone     = allSecondaries.filter(f => f.status === 'done').length;
+    const secPending  = allSecondaries.filter(f => f.status === 'pending').length;
+    const secRejected = allSecondaries.filter(f => f.status === 'rejected').length;
+
+    // Stats bar
+    const statsBar = document.createElement('div');
+    statsBar.className = 'sec-stats-bar';
+    statsBar.innerHTML = `
+      <div class="sec-stat">
+        <span class="sec-stat-value" style="color:var(--accent-light)">${available}</span>
+        <span class="sec-stat-label">\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e</span>
+      </div>
+      <div class="sec-stat-divider"></div>
+      <div class="sec-stat">
+        <span class="sec-stat-value">${created}</span>
+        <span class="sec-stat-label">\u0421\u043e\u0437\u0434\u0430\u043d\u043e</span>
+      </div>
+      <div class="sec-stat-divider"></div>
+      <div class="sec-stat">
+        <span class="sec-stat-value" style="color:var(--success)">${secDone}</span>
+        <span class="sec-stat-label">\u0421\u0434\u0435\u043b\u0430\u043d\u043e</span>
+      </div>
+      <div class="sec-stat-divider"></div>
+      <div class="sec-stat">
+        <span class="sec-stat-value" style="color:var(--warning)">${secPending}</span>
+        <span class="sec-stat-label">\u041f\u0435\u043d\u0434\u0438\u043d\u0433</span>
+      </div>
+      <div class="sec-stat-divider"></div>
+      <div class="sec-stat">
+        <span class="sec-stat-value" style="color:var(--danger)">${secRejected}</span>
+        <span class="sec-stat-label">\u041e\u0442\u043a\u0430\u0437</span>
+      </div>
+    `;
+    container.appendChild(statsBar);
 
     if (!parents.length) {
       container.innerHTML = `<div class="empty-state">Нет завершённых аккаунтов для создания вторяков.<br><small style="color:var(--text-muted);font-size:0.78rem">Отметьте карточку как «Сделано», чтобы она появилась здесь.</small></div>`;
