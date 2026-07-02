@@ -31,6 +31,9 @@
         <button class="tab-btn active" data-tab="processing">
           <span class="tab-icon">📋</span><span>Обработка</span>
         </button>
+        <button class="tab-btn" data-tab="secondaries">
+          <span class="tab-icon">🔁</span><span>Вторяки</span><span id="secondaries-badge" class="tab-badge" style="display:none"></span>
+        </button>
         <button class="tab-btn" data-tab="dashboard">
           <span class="tab-icon">📊</span><span>Дашборд</span>
         </button>
@@ -116,6 +119,11 @@
 
       <!-- Ready Fulls -->
       <div id="ready-fulls-container" class="ready-container"></div>
+    </main>
+
+    <!-- ── Secondaries Page ─────────────────────────────── -->
+    <main id="page-secondaries" class="page">
+      <div id="secondaries-container" class="secondaries-page-container"></div>
     </main>
 
     <!-- ── Dashboard Page ────────────────────────────────── -->

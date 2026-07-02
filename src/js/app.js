@@ -121,8 +121,10 @@ const App = {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById(`page-${btn.dataset.tab}`).classList.add('active');
+        const page = document.getElementById(`page-${btn.dataset.tab}`);
+        if (page) page.classList.add('active');
         if (btn.dataset.tab === 'dashboard') DashboardManager.refresh();
+        if (btn.dataset.tab === 'secondaries') this.renderSecondaries();
       });
     });
   },
@@ -426,6 +428,7 @@ const App = {
 
     this.renderList('business');
     this.renderReadyFulls();
+    this.renderSecondaries();
     DataUtils.showToast(`Вторяк ${secondary.secondaryIndex} создан! ✨`);
   },
 
@@ -488,6 +491,40 @@ const App = {
     container.replaceChild(newCard, oldCard);
   },
 
+  /* ── Workday Helper ────────────────────────────────────── */
+
+  // Workday: 16:00 MSK to 04:00 MSK next day
+  isCurrentWorkDay(isoDate) {
+    if (!isoDate) return false;
+    const d = new Date(isoDate);
+    // MSK = UTC+3
+    const mskOffset = 3 * 60; // minutes
+    const mskMs = d.getTime() + (mskOffset - (d.getTimezoneOffset() * -1)) * 60000;
+    // Simpler: just get MSK time directly
+    const msk = new Date(d.getTime() + 3 * 3600 * 1000);
+    const mskH = msk.getUTCHours();
+    const mskDate = msk.getUTCDate();
+    const mskMonth = msk.getUTCMonth();
+    const mskYear = msk.getUTCFullYear();
+
+    const now = new Date();
+    const nowMsk = new Date(now.getTime() + 3 * 3600 * 1000);
+    const nowH = nowMsk.getUTCHours();
+
+    // Start of current workday in MSK
+    let wdStart = new Date(Date.UTC(nowMsk.getUTCFullYear(), nowMsk.getUTCMonth(), nowMsk.getUTCDate(), 16, 0, 0));
+    // If current MSK time is 00:00–03:59, workday started yesterday at 16:00
+    if (nowH < 4) wdStart = new Date(wdStart.getTime() - 24 * 3600 * 1000);
+    // End of workday = start + 12h (16:00 → 04:00 = 12 hours)
+    const wdEnd = new Date(wdStart.getTime() + 12 * 3600 * 1000);
+
+    // Convert wdStart/wdEnd back to UTC for comparison with card's createdAt
+    const wdStartUTC = new Date(wdStart.getTime() - 3 * 3600 * 1000);
+    const wdEndUTC   = new Date(wdEnd.getTime()   - 3 * 3600 * 1000);
+
+    return d >= wdStartUTC && d < wdEndUTC;
+  },
+
   /* ── Render Ready Fulls ────────────────────────────────── */
 
   renderReadyFulls() {
@@ -499,9 +536,56 @@ const App = {
       return;
     }
 
+    const todayCards    = this.readyFulls.filter(f => this.isCurrentWorkDay(f.createdAt));
+    const archiveCards  = this.readyFulls.filter(f => !this.isCurrentWorkDay(f.createdAt));
+
+    if (!todayCards.length && archiveCards.length) {
+      // All cards are from past days
+      container.innerHTML = '<div class="empty-state">Нет карточек за текущий рабочий день.</div>';
+    }
+
     const frag = document.createDocumentFragment();
-    this.readyFulls.forEach((full, i) => frag.appendChild(this._buildCard(full, i)));
+    todayCards.forEach((full) => {
+      const i = this.readyFulls.indexOf(full);
+      frag.appendChild(this._buildCard(full, i));
+    });
     container.appendChild(frag);
+
+    // Archive toggle
+    if (archiveCards.length > 0) {
+      const archiveSection = document.createElement('div');
+      archiveSection.className = 'archive-section';
+      archiveSection.innerHTML = `
+        <button class="archive-toggle-btn" id="archive-toggle">
+          🗂 Показать за прошлые дни (${archiveCards.length})
+        </button>
+        <div class="archive-cards" id="archive-cards" style="display:none"></div>
+      `;
+      container.appendChild(archiveSection);
+
+      document.getElementById('archive-toggle').addEventListener('click', (e) => {
+        const archiveEl = document.getElementById('archive-cards');
+        const btn = e.currentTarget;
+        if (archiveEl.style.display === 'none') {
+          if (!archiveEl.children.length) {
+            const af = document.createDocumentFragment();
+            archiveCards.forEach(full => {
+              const i = this.readyFulls.indexOf(full);
+              af.appendChild(this._buildCard(full, i));
+            });
+            archiveEl.appendChild(af);
+            this._bindCardEvents(archiveEl);
+          }
+          archiveEl.style.display = 'block';
+          btn.textContent = `🗂 Скрыть прошлые дни (${archiveCards.length})`;
+        } else {
+          archiveEl.style.display = 'none';
+          btn.textContent = `🗂 Показать за прошлые дни (${archiveCards.length})`;
+        }
+      });
+    }
+
+    this._updateSecondariesBadge();
   },
 
   _buildCard(full, index) {
@@ -510,6 +594,7 @@ const App = {
 
     const card = document.createElement('div');
     card.className = 'result-card';
+    card.dataset.id = full.id;
 
     // Status badge
     let badgeClass = '', badgeText = 'Новая';
@@ -1006,6 +1091,8 @@ const App = {
 
     const labels = { done: 'Сделано ✅', pending: 'Пендинг ⏳', rejected: 'Отказ ❌' };
     DataUtils.showToast(labels[status]);
+    // Refresh secondaries tab if it's active
+    this.renderSecondaries();
   },
 
   /* ── Save Pending Code ────────────────────────────────── */
@@ -1065,6 +1152,140 @@ const App = {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  },
+
+  /* ── Bind card events for dynamically rendered archive cards ─ */
+
+  _bindCardEvents(container) {
+    // Events are already bound by _buildCard; this is a no-op placeholder
+    // because _buildCard binds listeners directly on each element.
+  },
+
+  /* ── Update secondaries badge counter in tab ──────────── */
+
+  _updateSecondariesBadge() {
+    const badge = document.getElementById('secondaries-badge');
+    if (!badge) return;
+    const parents = this.readyFulls.filter(f => f.status === 'done' && (f.parentId === null || f.parentId === undefined));
+    const totalSlots = parents.length * 4;
+    const usedSlots  = this.readyFulls.filter(f => f.parentId !== null && f.parentId !== undefined).length;
+    const available  = totalSlots - usedSlots;
+    if (available > 0) {
+      badge.style.display = 'inline-flex';
+      badge.textContent = available;
+    } else {
+      badge.style.display = 'none';
+    }
+  },
+
+  /* ── Render Secondaries Page ────────────────────────── */
+
+  renderSecondaries() {
+    const container = document.getElementById('secondaries-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Only parent cards that have status = done
+    const parents = this.readyFulls.filter(
+      f => f.status === 'done' && (f.parentId === null || f.parentId === undefined)
+    );
+
+    if (!parents.length) {
+      container.innerHTML = '<div class="empty-state">Нет завершённых аккаунтов для создания вторяков.
+        <br><small style="color:var(--text-muted);font-size:0.78rem">Отметьте карточку как «Сделано», чтобы она появилась здесь.</small></div>';
+      this._updateSecondariesBadge();
+      return;
+    }
+
+    const statusIcon = (s) => {
+      if (s === 'done')     return '✅';
+      if (s === 'pending')  return '⏳';
+      if (s === 'rejected') return '❌';
+      return '🆕';
+    };
+    const statusLabel = (s) => ({
+      done: 'Сделано', pending: 'Пендинг', rejected: 'Отказ'
+    })[s] || 'Новая';
+
+    parents.forEach(parent => {
+      const secondaries = this.readyFulls.filter(f => f.parentId === parent.id);
+      const createdCount = secondaries.length;
+
+      const group = document.createElement('div');
+      group.className = 'sec-group';
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'sec-group-header';
+      header.innerHTML = `
+        <div class="sec-group-person">
+          <span class="sec-group-avatar">${parent.personal.firstName[0]}${parent.personal.lastName[0]}</span>
+          <div class="sec-group-info">
+            <span class="sec-group-name">${this._esc(parent.personal.firstName)} ${this._esc(parent.personal.lastName)}</span>
+            <span class="sec-group-meta">${this._esc(parent.personal.state)} &bull; ${parent.business ? this._esc(parent.business.companyName || '') : 'Без бизнеса'}</span>
+          </div>
+        </div>
+        <div class="sec-group-counter">${createdCount}/4 вторяка</div>
+      `;
+
+      // Slots
+      const slots = document.createElement('div');
+      slots.className = 'sec-group-slots';
+
+      for (let i = 1; i <= 4; i++) {
+        const sec = secondaries.find(s => s.secondaryIndex === i);
+        const slot = document.createElement('div');
+
+        if (sec) {
+          slot.className = 'sec-slot sec-slot-filled';
+          slot.innerHTML = `
+            <div class="sec-slot-num">${i}</div>
+            <div class="sec-slot-icon">${statusIcon(sec.status)}</div>
+            <div class="sec-slot-label">Вторяк ${i}</div>
+            <div class="sec-slot-status">${statusLabel(sec.status)}</div>
+          `;
+          slot.addEventListener('click', () => {
+            // Switch to processing tab and scroll
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelector('[data-tab="processing"]').classList.add('active');
+            document.getElementById('page-processing').classList.add('active');
+            setTimeout(() => {
+              const container2 = document.getElementById('ready-fulls-container');
+              Array.from(container2.querySelectorAll('.result-card')).forEach(card => {
+                const cardId = parseFloat(card.dataset.id);
+                if (cardId === sec.id) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
+            }, 100);
+          });
+        } else if (i === createdCount + 1) {
+          slot.className = 'sec-slot sec-slot-available';
+          slot.innerHTML = `
+            <div class="sec-slot-num">${i}</div>
+            <div class="sec-slot-label">Вторяк ${i}</div>
+            <button class="btn-sec-create">⊕ Создать</button>
+          `;
+          slot.querySelector('.btn-sec-create').addEventListener('click', async () => {
+            await this.createSecondary(parent.id);
+          });
+        } else {
+          slot.className = 'sec-slot sec-slot-locked';
+          slot.innerHTML = `
+            <div class="sec-slot-num">${i}</div>
+            <div class="sec-slot-label">Вторяк ${i}</div>
+            <div class="sec-slot-lock">🔒</div>
+          `;
+        }
+
+        slots.appendChild(slot);
+      }
+
+      group.appendChild(header);
+      group.appendChild(slots);
+      container.appendChild(group);
+    });
+
+    this._updateSecondariesBadge();
   },
 
   /* ── Secondary Modal ───────────────────────────────────── */
