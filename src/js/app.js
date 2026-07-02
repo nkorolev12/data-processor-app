@@ -484,9 +484,15 @@ const App = {
     const full = this.readyFulls.find(f => f.id === fullId);
     if (!full) { this.renderReadyFulls(); return; }
     const index = this.readyFulls.indexOf(full);
+
+    // Find card by data-id attribute (works even with filtered today-only view)
     const container = document.getElementById('ready-fulls-container');
-    const oldCard   = container.children[index];
-    if (!oldCard) { this.renderReadyFulls(); return; }
+    const oldCard = container.querySelector(`[data-id="${fullId}"]`);
+    if (!oldCard) {
+      // Card may be in archive section or not yet rendered — full re-render
+      this.renderReadyFulls();
+      return;
+    }
     const newCard = this._buildCard(full, index);
     container.replaceChild(newCard, oldCard);
   },
@@ -1191,8 +1197,7 @@ const App = {
     );
 
     if (!parents.length) {
-      container.innerHTML = '<div class="empty-state">Нет завершённых аккаунтов для создания вторяков.
-        <br><small style="color:var(--text-muted);font-size:0.78rem">Отметьте карточку как «Сделано», чтобы она появилась здесь.</small></div>';
+      container.innerHTML = `<div class="empty-state">Нет завершённых аккаунтов для создания вторяков.<br><small style="color:var(--text-muted);font-size:0.78rem">Отметьте карточку как «Сделано», чтобы она появилась здесь.</small></div>`;
       this._updateSecondariesBadge();
       return;
     }
@@ -1355,8 +1360,5 @@ const App = {
   }
 };
 
-// ── Bootstrap ─────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  App.init();
-  App.setupSecondaryModal();
-});
+// ── Bootstrap ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => App.init());
