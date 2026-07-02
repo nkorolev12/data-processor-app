@@ -158,6 +158,26 @@
   color: var(--danger);
 }
 
+/* ── Card Header Right (elapsed + badge) ──────────────────── */
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.card-elapsed {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
 /* ── Card Body ─────────────────────────────────────────────── */
 .card-body {
   padding: 20px;

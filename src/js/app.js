@@ -677,7 +677,8 @@ const App = {
       : '';
 
     // Secondary cards block (shown in parent when status=done)
-    const secondaries = full.parentId === null
+    const isParent = (full.parentId === null || full.parentId === undefined);
+    const secondaries = isParent
       ? this.readyFulls.filter(f => f.parentId === full.id)
       : [];
     const secondaryCount = secondaries.length;
@@ -691,7 +692,7 @@ const App = {
     };
 
     // Secondary block — rich 4-slot panel shown when parent card is done
-    const secondaryBlockHTML = (full.status === 'done' && (full.parentId === null || full.parentId === undefined))
+    const secondaryBlockHTML = (full.status === 'done' && isParent)
       ? (() => {
           const slots = [1, 2, 3, 4].map(i => {
             const sec = secondaries.find(s => s.secondaryIndex === i);
@@ -745,7 +746,12 @@ const App = {
             ? `<span class="secondary-badge">Вторяк ${full.secondaryIndex}</span>`
             : ''}
         </div>
-        <span class="card-status-badge ${badgeClass}">${badgeText}</span>
+        <div class="card-header-right">
+          ${full.status && full.statusTimestamp
+            ? `<span class="card-elapsed" title="Время заполнения">⏱ ${this._formatElapsed(full.createdAt, full.statusTimestamp)}</span>`
+            : ''}
+          <span class="card-status-badge ${badgeClass}">${badgeText}</span>
+        </div>
       </div>
       <div class="card-body">
 
@@ -1092,8 +1098,9 @@ const App = {
     const full = this.readyFulls.find(f => f.id === fullId);
     if (!full || full.status !== null) return;
 
-    full.status     = status;
-    full.statusDate = DataUtils.getTodayDate();
+    full.status          = status;
+    full.statusDate      = DataUtils.getTodayDate();
+    full.statusTimestamp = new Date().toISOString();
 
     const stats = await DataStorage.loadStatistics();
     const today = DataUtils.getTodayDate();
@@ -1167,6 +1174,19 @@ const App = {
       pass += chars[Math.floor(Math.random() * chars.length)];
     }
     return pass;
+  },
+
+  _formatElapsed(startIso, endIso) {
+    if (!startIso || !endIso) return '';
+    const diffMs  = new Date(endIso) - new Date(startIso);
+    if (diffMs < 0) return '';
+    const totalSec = Math.floor(diffMs / 1000);
+    const hours    = Math.floor(totalSec / 3600);
+    const minutes  = Math.floor((totalSec % 3600) / 60);
+    const seconds  = totalSec % 60;
+    if (hours > 0)   return `${hours}ч ${minutes}м`;
+    if (minutes > 0) return `${minutes}м ${seconds}с`;
+    return `${seconds}с`;
   },
 
   _esc(str) {
