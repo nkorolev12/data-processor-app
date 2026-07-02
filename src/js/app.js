@@ -373,6 +373,61 @@ const App = {
     DataUtils.showToast('Карточка создана! ✨');
   },
 
+  /* ── Create Secondary Card (Вторяк) ───────────────────── */
+
+  async createSecondary(parentId) {
+    const parent = this.readyFulls.find(f => f.id === parentId);
+    if (!parent) return;
+
+    // Count existing secondaries for this parent
+    const existingCount = this.readyFulls.filter(f => f.parentId === parentId).length;
+    if (existingCount >= 4) {
+      DataUtils.showToast('Максимум 4 вторяка на одну карточку!');
+      return;
+    }
+
+    const business = this.businessFulls.find(b => !b.used);
+    if (!business) {
+      DataUtils.showToast('Нет свободных бизнес фулок!');
+      return;
+    }
+
+    business.used = true;
+
+    const stateCode  = parent.personal.state;
+    const coreProxy  = ProxyGenerator.generateCoreProxy(stateCode);
+    const flashProxy = ProxyGenerator.generateFlashProxy(stateCode);
+
+    const secondary = {
+      id:                  Date.now() + Math.random(),
+      createdAt:           new Date().toISOString(),
+      personal:            { ...parent.personal },
+      business:            { ...business },
+      manualEmail:         '',
+      manualEmailPassword: '',
+      pendingCode:         '',
+      coreProxy,
+      flashProxy,
+      status:              null,
+      statusDate:          null,
+      parentId:            parentId,
+      secondaryIndex:      existingCount + 1
+    };
+
+    // Insert secondary right after parent card
+    const parentIdx = this.readyFulls.indexOf(parent);
+    this.readyFulls.splice(parentIdx + existingCount + 1, 0, secondary);
+
+    await Promise.all([
+      DataStorage.saveBusinessFulls(this.businessFulls),
+      DataStorage.saveReadyFulls(this.readyFulls)
+    ]);
+
+    this.renderList('business');
+    this.renderReadyFulls();
+    DataUtils.showToast(`Вторяк ${secondary.secondaryIndex} создан! ✨`);
+  },
+
   /* ── Attach Business to Card ───────────────────────────── */
 
   async attachBusiness(fullId) {
@@ -530,11 +585,48 @@ const App = {
          </div>`
       : '';
 
+    // Secondary cards block (shown in parent when status=done)
+    const secondaries = full.parentId === null
+      ? this.readyFulls.filter(f => f.parentId === full.id)
+      : [];
+    const secondaryCount = secondaries.length;
+    const canAddMore = secondaryCount < 4;
+
+    const statusIcon = (s) => {
+      if (s === 'done')     return '✅';
+      if (s === 'pending')  return '⏳';
+      if (s === 'rejected') return '❌';
+      return '🆕';
+    };
+
+    const secondaryBlockHTML = (full.status === 'done' && full.parentId === null)
+      ? `<div class="secondary-block">
+           <div class="secondary-block-header">
+             <span class="secondary-block-title">🔁 Вторяки</span>
+             <span class="secondary-count">${secondaryCount}/4</span>
+           </div>
+           ${secondaryCount > 0 ? `<div class="secondary-list">${secondaries.map(s =>
+             `<div class="secondary-item" data-scroll-to="${s.id}">
+                <span class="secondary-item-icon">${statusIcon(s.status)}</span>
+                <span class="secondary-item-name">Вторяк ${s.secondaryIndex}</span>
+                <span class="secondary-item-status">${s.status ? ({done:'Сделано',pending:'Пендинг',rejected:'Отказ'}[s.status]) : 'Новая'}</span>
+              </div>`
+           ).join('')}</div>` : ''}
+           ${canAddMore
+             ? `<button class="btn-create-secondary" data-parent-id="${full.id}">＋ Создать вторяк</button>`
+             : `<div class="secondary-max-note">Максимум 4 вторяка достигнут</div>`
+           }
+         </div>`
+      : '';
+
     card.innerHTML = `
       <div class="card-header">
         <div class="card-title">
           <span class="card-number">#${this.readyFulls.length - index}</span>
           <span class="card-name">${this._esc(p.firstName)} ${this._esc(p.lastName)}</span>
+          ${full.secondaryIndex !== null && full.secondaryIndex !== undefined
+            ? `<span class="secondary-badge">Вторяк ${full.secondaryIndex}</span>`
+            : ''}
         </div>
         <span class="card-status-badge ${badgeClass}">${badgeText}</span>
       </div>
@@ -559,6 +651,7 @@ const App = {
         ${businessHTML}
         ${emailSectionHTML}
         ${referenceHTML}
+        ${secondaryBlockHTML}
 
         <div class="card-proxy-section">
           <div class="proxy-block">
@@ -742,6 +835,24 @@ const App = {
       });
     }
 
+    // ── Create secondary button
+    const createSecBtn = card.querySelector('.btn-create-secondary');
+    if (createSecBtn) {
+      createSecBtn.addEventListener('click', () => this.createSecondary(full.id));
+    }
+
+    // ── Secondary item scroll
+    card.querySelectorAll('.secondary-item[data-scroll-to]').forEach(item => {
+      item.addEventListener('click', () => {
+        const targetId = parseFloat(item.dataset.scrollTo);
+        const targetIdx = this.readyFulls.findIndex(f => f.id === targetId);
+        if (targetIdx === -1) return;
+        const container = document.getElementById('ready-fulls-container');
+        const targetCard = container.children[targetIdx];
+        if (targetCard) targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
     // ── Delete card button
     card.querySelector('.btn-delete-card').addEventListener('click', () => {
       if (confirm(`Удалить карточку ${full.personal.firstName} ${full.personal.lastName}?`)) {
@@ -838,6 +949,10 @@ const App = {
     }
 
     lines.push('saving+checking');
+
+    if (full.secondaryIndex !== null && full.secondaryIndex !== undefined) {
+      lines.push(`Вторяк ${full.secondaryIndex}`);
+    }
 
     return lines.join('\n');
   },
