@@ -129,6 +129,12 @@
   border-radius: 6px;
 }
 
+.card-number[title] {
+  cursor: help;
+  text-decoration: underline dotted rgba(124, 58, 237, 0.5);
+  text-underline-offset: 3px;
+}
+
 .card-name {
   font-size: 1rem;
   font-weight: 600;
