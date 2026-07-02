@@ -252,10 +252,17 @@
 }
 
 .addr-zip {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
   font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1px 7px;
+  border-radius: 5px;
 }
 
 .addr-state-badge {
