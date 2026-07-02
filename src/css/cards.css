@@ -215,6 +215,68 @@
   margin-bottom: 8px;
 }
 
+/* ── Structured Address Block ───────────────────────────────── */
+.addr-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.addr-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.addr-val {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.addr-city-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+
+.addr-city {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.addr-zip {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+.addr-state-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  color: var(--accent-light);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.addr-sep {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 .business-section,
 .email-section {
   padding-top: 14px;

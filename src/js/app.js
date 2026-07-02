@@ -767,7 +767,7 @@ const App = {
           </div>
           <div class="data-line"><span class="data-icon">🔑</span> ${this._esc(p.ssn)}</div>
           <div class="data-line"><span class="data-icon">👤</span> ${this._esc(p.firstName)} ${this._esc(p.lastName)}</div>
-          <div class="data-line"><span class="data-icon">📍</span> ${this._esc(p.address)}, ${this._esc(p.city)}, ${this._esc(p.zip)}, ${this._esc(p.state)}</div>
+          ${this._buildAddressBlock(p)}
           <div class="data-line"><span class="data-icon">📧</span> ${this._esc(p.email)}</div>
           <div class="data-line phone-line">
             <span class="data-icon">📞</span>
@@ -1191,6 +1191,119 @@ const App = {
     if (hours > 0)   return `${hours}ч ${minutes}м`;
     if (minutes > 0) return `${minutes}м ${seconds}с`;
     return `${seconds}с`;
+  },
+
+  /* ── Build structured address block ────────────────────── */
+
+  _buildAddressBlock(p) {
+    if (!p.address) return '';
+
+    const addr = p.address.trim();
+
+    // Directional abbreviations (prefix or suffix)
+    const DIR = /^(N\.?|S\.?|E\.?|W\.?|NE\.?|NW\.?|SE\.?|SW\.?|North|South|East|West|Northeast|Northwest|Southeast|Southwest)\b/i;
+
+    // Street type suffixes
+    const TYPES = {
+      'st':'St','street':'St','ave':'Ave','avenue':'Ave','blvd':'Blvd','boulevard':'Blvd',
+      'dr':'Dr','drive':'Dr','rd':'Rd','road':'Rd','ln':'Ln','lane':'Ln','ct':'Ct',
+      'court':'Ct','pl':'Pl','place':'Pl','way':'Way','cir':'Cir','circle':'Cir',
+      'pkwy':'Pkwy','parkway':'Pkwy','fwy':'Fwy','freeway':'Fwy','trl':'Trl','trail':'Trl',
+      'pass':'Pass','hwy':'Hwy','highway':'Hwy','loop':'Loop','run':'Run',
+      'ter':'Ter','terrace':'Ter','pt':'Pt','point':'Pt','sq':'Sq','square':'Sq',
+      'xing':'Xing','crossing':'Xing'
+    };
+
+    // Apt/Unit pattern
+    const APT_RE = /\b(apt\.?|unit\.?|#|suite\.?|ste\.?|bldg\.?)\s*[\w-]+/i;
+
+    let street = addr;
+    let aptUnit = '';
+
+    // Extract apartment/unit first
+    const aptMatch = street.match(APT_RE);
+    if (aptMatch) {
+      aptUnit = aptMatch[0].trim();
+      street = street.replace(aptMatch[0], '').trim().replace(/,\s*$/, '').trim();
+    }
+
+    // Split street into tokens
+    const tokens = street.split(/\s+/);
+    let houseNum = '';
+    let direction = '';
+    let suffix = '';
+    let streetNameParts = [];
+
+    let i = 0;
+
+    // 1. House number (leading digits, possibly with letter: 6503, 12A)
+    if (i < tokens.length && /^\d+[a-zA-Z]?$/.test(tokens[i])) {
+      houseNum = tokens[i++];
+    }
+
+    // 2. Optional prefix direction
+    if (i < tokens.length && DIR.test(tokens[i])) {
+      direction = tokens[i++];
+    }
+
+    // 3. Collect name tokens, checking last for type suffix
+    const rest = tokens.slice(i);
+    // Check last 1-2 tokens for street type
+    for (let j = rest.length - 1; j >= 0; j--) {
+      const t = rest[j].replace(/\.$/, '').toLowerCase();
+      if (TYPES[t]) {
+        suffix = TYPES[t];
+        streetNameParts = rest.slice(0, j);
+        break;
+      }
+      if (j === 0) streetNameParts = rest; // no type found
+    }
+
+    // Build display rows
+    const rows = [];
+
+    // Row 1: street line
+    const streetLine = [
+      houseNum,
+      direction,
+      ...streetNameParts,
+      suffix
+    ].filter(Boolean).join(' ');
+
+    if (streetLine) {
+      rows.push(`<div class="data-line addr-street">
+        <span class="data-icon">📍</span>
+        <div class="addr-cell">
+          <span class="addr-tag">\u0423\u043b\u0438\u0446\u0430</span>
+          <span class="addr-val">${this._esc(streetLine)}</span>
+        </div>
+      </div>`);
+    }
+
+    // Row 2: apt/unit (if any)
+    if (aptUnit) {
+      rows.push(`<div class="data-line addr-apt">
+        <span class="data-icon">&nbsp;</span>
+        <div class="addr-cell">
+          <span class="addr-tag">\u041a\u0432\u0430\u0440\u0442\u0438\u0440\u0430</span>
+          <span class="addr-val">${this._esc(aptUnit)}</span>
+        </div>
+      </div>`);
+    }
+
+    // Row 3: city + zip + state in one compact line
+    const cityLine = [
+      p.city ? `<span class="addr-city">${this._esc(p.city)}</span>` : '',
+      p.zip  ? `<span class="addr-zip">${this._esc(p.zip)}</span>`   : '',
+      p.state? `<span class="addr-state-badge">${this._esc(p.state)}</span>` : ''
+    ].filter(Boolean).join('<span class="addr-sep">&nbsp;&bull;&nbsp;</span>');
+
+    rows.push(`<div class="data-line addr-location">
+      <span class="data-icon">&nbsp;</span>
+      <div class="addr-city-row">${cityLine}</div>
+    </div>`);
+
+    return rows.join('');
   },
 
   _esc(str) {
