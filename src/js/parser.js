@@ -27,6 +27,19 @@ const DataParser = {
   },
 
   /**
+   * Converts a name to Title Case.
+   * Handles ALL_CAPS and all_lowercase.
+   * e.g. "JULIANA" → "Juliana", "BARCENAS" → "Barcenas"
+   * Mixed-case names (already proper) are left untouched.
+   */
+  _toTitleCase(str) {
+    if (!str) return str;
+    // If already mixed case — leave it (e.g. "McDonald" stays "McDonald")
+    if (str !== str.toUpperCase() && str !== str.toLowerCase()) return str;
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  },
+
+  /**
    * Parse a personal full line. Supports multiple formats:
    *
    * Format A (13 fields — original with State2 and bank):
@@ -56,8 +69,8 @@ const DataParser = {
 
     // ── Format A: 13+ fields (original with State2 + bank)
     if (len >= 13 && parts[10].includes('@')) {
-      const firstName = parts[2];
-      const lastName  = parts[4];
+      const firstName = this._toTitleCase(parts[2]);
+      const lastName  = this._toTitleCase(parts[4]);
       if (!firstName || !lastName) return null;
       return {
         raw:       line.trim(),
@@ -78,8 +91,8 @@ const DataParser = {
 
     // ── Format B: 12 fields (State2, no bank). Email at index 10.
     if (len === 12 && parts[10].includes('@')) {
-      const firstName = parts[2];
-      const lastName  = parts[4];
+      const firstName = this._toTitleCase(parts[2]);
+      const lastName  = this._toTitleCase(parts[4]);
       if (!firstName || !lastName) return null;
       return {
         raw:       line.trim(),
@@ -102,8 +115,8 @@ const DataParser = {
     // DOB,SSN,First,Middle,Last,Address,City,ZIP,State,Email,Phone
     // Middle can be empty (''), single char ('D'), initials ('L.'), or full word ('Mae')
     if (len === 11 && parts[9].includes('@')) {
-      const firstName = parts[2];
-      const lastName  = parts[4];
+      const firstName = this._toTitleCase(parts[2]);
+      const lastName  = this._toTitleCase(parts[4]);
       if (!firstName || !lastName) return null;
       return {
         raw:       line.trim(),
@@ -125,8 +138,8 @@ const DataParser = {
     // ── Format D: 10 fields, no middle name. Email at index 8.
     // DOB,SSN,First,Last,Address,City,ZIP,State,Email,Phone
     if (len === 10 && parts[8].includes('@')) {
-      const firstName = parts[2];
-      const lastName  = parts[3];
+      const firstName = this._toTitleCase(parts[2]);
+      const lastName  = this._toTitleCase(parts[3]);
       if (!firstName || !lastName) return null;
       return {
         raw:       line.trim(),
