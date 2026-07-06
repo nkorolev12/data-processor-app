@@ -129,13 +129,13 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
 
-    // Проверяем обновления через 3 секунды после запуска
+    // Проверяем обновления через 30 секунд после запуска (даём время CDN GitHub распространить файлы)
     if (app.isPackaged) {
       setTimeout(() => {
         autoUpdater.checkForUpdates().catch(err => {
           fs.appendFileSync(logPath, `\n[${new Date().toISOString()}] UPDATER ERROR: ${err.stack || err}\n`);
         });
-      }, 3000);
+      }, 30000);
     }
   });
 
