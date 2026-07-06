@@ -17,23 +17,36 @@ const ProxyGenerator = {
     'WA': 'washington', 'WI': 'wisconsin', 'WV': 'westvirginia', 'WY': 'wyoming'
   },
 
-  /**
-   * CoreProxy — для создания почты
-   * Format: resi.coreproxy.io:32325:207438cdfbc4:2216fe4bab7a_country-us_state-{state}_session-{token}_lifetime-30m
-   */
-  generateCoreProxy(stateCode) {
-    const state = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
-    const token = DataUtils.generateToken(10, 15);
-    return `resi.coreproxy.io:32325:207438cdfbc4:2216fe4bab7a_country-us_state-${state}_session-${token}_lifetime-30m`;
+  /** Generate a random alphanumeric session token */
+  _randomSession(len = 10) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let s = '';
+    for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
   },
 
   /**
-   * FlashProxy — для регистрации BOA
+   * EmailProxy — для создания почты (geo.g-w.info)
+   * Format: socks5://user-nSnoq6CCVLgaxmpG-type-residential-session-{SESSION}-country-US-state-{state}-rotation-20-udp-1:2ssv7poW4xbYIfqo@geo.g-w.info:10800
+   */
+  generateEmailProxy(stateCode) {
+    const state   = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
+    const session = this._randomSession(10);
+    return `socks5://user-nSnoq6CCVLgaxmpG-type-residential-session-${session}-country-US-state-${state}-rotation-20-udp-1:2ssv7poW4xbYIfqo@geo.g-w.info:10800`;
+  },
+
+  /**
+   * FlashProxy — для регистрации BOA (не трогаем)
    * Format: adam.flashproxy.io:1080:yezrwnhnxwfk-country-US-state-{state}-speed-fast-pool-unlocked-session-{token}-time-long:mihe6hpqdspy
    */
   generateFlashProxy(stateCode) {
     const state = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
     const token = DataUtils.generateToken(10, 15);
     return `adam.flashproxy.io:1080:yezrwnhnxwfk-country-US-state-${state}-speed-fast-pool-unlocked-session-${token}-time-long:mihe6hpqdspy`;
+  },
+
+  /** @deprecated Legacy alias kept for old card data compatibility */
+  generateCoreProxy(stateCode) {
+    return this.generateEmailProxy(stateCode);
   }
 };

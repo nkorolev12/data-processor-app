@@ -282,7 +282,7 @@ const App = {
       used:      true
     };
 
-    const coreProxy  = ProxyGenerator.generateCoreProxy(state);
+    const coreProxy  = ProxyGenerator.generateEmailProxy(state);
     const flashProxy = ProxyGenerator.generateFlashProxy(state);
 
     const readyFull = {
@@ -349,7 +349,7 @@ const App = {
     personal.used = true;
 
     const stateCode  = personal.state;
-    const coreProxy  = ProxyGenerator.generateCoreProxy(stateCode);
+    const coreProxy  = ProxyGenerator.generateEmailProxy(stateCode);
     const flashProxy = ProxyGenerator.generateFlashProxy(stateCode);
 
     const readyFull = {
@@ -400,7 +400,7 @@ const App = {
     business.used = true;
 
     const stateCode  = parent.personal.state;
-    const coreProxy  = ProxyGenerator.generateCoreProxy(stateCode);
+    const coreProxy  = ProxyGenerator.generateEmailProxy(stateCode);
     const flashProxy = ProxyGenerator.generateFlashProxy(stateCode);
 
     const secondary = {
@@ -970,7 +970,7 @@ const App = {
         const stateCode = full.personal.state;
         btn.classList.add('spinning');
         const newProxy = type === 'core'
-          ? ProxyGenerator.generateCoreProxy(stateCode)
+          ? ProxyGenerator.generateEmailProxy(stateCode)
           : ProxyGenerator.generateFlashProxy(stateCode);
         if (type === 'core')  full.coreProxy  = newProxy;
         if (type === 'flash') full.flashProxy = newProxy;
