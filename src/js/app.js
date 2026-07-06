@@ -486,16 +486,15 @@ const App = {
     if (!full) { this.renderReadyFulls(); return; }
     const index = this.readyFulls.indexOf(full);
 
-    // Find card by data-id attribute (works even with filtered today-only view)
-    const container = document.getElementById('ready-fulls-container');
-    const oldCard = container.querySelector(`[data-id="${fullId}"]`);
+    // Search in ALL possible containers: main list, secondaries tab, archive
+    const oldCard = document.querySelector(`.result-card[data-id="${fullId}"]`);
     if (!oldCard) {
-      // Card may be in archive section or not yet rendered — full re-render
+      // Not currently visible — just re-render the relevant tab
       this.renderReadyFulls();
       return;
     }
     const newCard = this._buildCard(full, index);
-    container.replaceChild(newCard, oldCard);
+    oldCard.parentNode.replaceChild(newCard, oldCard);
   },
 
   /* ── Workday Helper ────────────────────────────────────── */
