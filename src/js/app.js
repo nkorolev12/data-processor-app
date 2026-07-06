@@ -918,32 +918,50 @@ const App = {
         let emailInput = card.querySelector(`[id="${emailInputId}"]`);
 
         const fillEmail = (inputEl) => {
-          const current = inputEl ? inputEl.value : '';
-          if (current && current.includes('@')) {
-            // Already has generated email → append random letter (not same as last)
-            const [login, domain] = current.split('@');
-            const lastChar = login[login.length - 1];
-            const pool = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => c !== lastChar);
-            const randomChar = pool[Math.floor(Math.random() * pool.length)];
-            inputEl.value = `${login}${randomChar}@${domain}`;
+          // Base email from name (deterministic — no randomness in _generateEmail)
+          const baseEmail = this._generateEmail(full.personal.firstName, full.personal.lastName);
+          const [baseLogin, domain] = baseEmail.split('@');
+          const current = inputEl ? inputEl.value.trim() : '';
+
+          let newLogin;
+          if (!current || !current.includes('@')) {
+            // Empty field → first generation, just the base
+            newLogin = baseLogin;
           } else {
-            // First generation — from name
-            if (inputEl) inputEl.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
+            const [currentLogin] = current.split('@');
+            const hasAddedLetter = currentLogin.length === baseLogin.length + 1
+                                && currentLogin.startsWith(baseLogin);
+
+            if (hasAddedLetter) {
+              // Already has one added letter → replace it with a DIFFERENT random letter
+              const currentAdded = currentLogin[currentLogin.length - 1];
+              const baseLast    = baseLogin[baseLogin.length - 1];
+              const pool = 'abcdefghijklmnopqrstuvwxyz'
+                .split('').filter(c => c !== currentAdded && c !== baseLast);
+              newLogin = baseLogin + pool[Math.floor(Math.random() * pool.length)];
+            } else if (currentLogin === baseLogin) {
+              // At base → add one random letter (not same as last char of base)
+              const baseLast = baseLogin[baseLogin.length - 1];
+              const pool = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => c !== baseLast);
+              newLogin = baseLogin + pool[Math.floor(Math.random() * pool.length)];
+            } else {
+              // Something unrecognised → restart from base
+              newLogin = baseLogin;
+            }
           }
-          const passEl = (inputEl ? inputEl.closest('.email-input-group') : null)?.querySelector(`[id="${emailPassId}"]`)
-                      || card.querySelector(`[id="${emailPassId}"]`);
+
+          if (inputEl) inputEl.value = `${newLogin}@${domain}`;
+          const passEl = card.querySelector(`[id="${emailPassId}"]`);
           if (passEl) passEl.value = this._generatePassword();
         };
 
         if (!emailInput) {
-          // Switch to edit mode first, then fill
           this._emailEditIds.add(full.id);
           this._updateCard(full.id);
           requestAnimationFrame(() => {
             const updatedCard = document.querySelector(`.result-card[data-id="${full.id}"]`);
             if (!updatedCard) return;
-            const ni = updatedCard.querySelector(`[id="${emailInputId}"]`);
-            fillEmail(ni);
+            fillEmail(updatedCard.querySelector(`[id="${emailInputId}"]`));
           });
           return;
         }
