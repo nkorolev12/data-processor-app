@@ -1173,30 +1173,25 @@ const App = {
   /* ── Helpers ───────────────────────────────────────────── */
 
   /**
-   * Generates email like jennaspahn72@outlook.com
-   * firstName (1st word) + lastName (1st word) + 1-4 random digits + @domain
+   * Generates email like julianabarcenas@hotmail.com
+   * firstName + lastName (letters only, no digits/specials).
+   * If last letter of firstName == first letter of lastName, skip the duplicate.
    */
   _generateEmail(firstName, lastName) {
-
-
-    // Combine names to handle cases where everything is in firstName, or middle name is in lastName
     const fullName = `${firstName || ''} ${lastName || ''}`.trim();
     const parts = fullName.split(/\s+/).filter(Boolean);
-    
-    // Get first word and last word (if only 1 word, use it for both or just first, let's use first and last)
+
+    // Letters only, lowercase
     let fn = parts.length > 0 ? parts[0].toLowerCase().replace(/[^a-z]/g, '') : '';
     let ln = parts.length > 1 ? parts[parts.length - 1].toLowerCase().replace(/[^a-z]/g, '') : '';
 
-    
-    // Generate 1 to 4 random digits
-    const digitsCount = Math.floor(Math.random() * 4) + 1;
-    let numStr = '';
-    for (let i = 0; i < digitsCount; i++) {
-      numStr += Math.floor(Math.random() * 10).toString();
+    // Remove duplicate letter at the junction (e.g. "juliana" + "anderson" → "julianderson")
+    if (fn && ln && fn[fn.length - 1] === ln[0]) {
+      ln = ln.slice(1);
     }
-    
+
     const domain = 'hotmail.com';
-    return `${fn}${ln}${numStr}@${domain}`;
+    return `${fn}${ln}@${domain}`;
   },
 
   /**
