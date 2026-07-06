@@ -404,7 +404,7 @@ const App = {
     const flashProxy = ProxyGenerator.generateFlashProxy(stateCode);
 
     const secondary = {
-      id:                  Date.now() + Math.random(),
+      id:                  Date.now() * 1000 + Math.floor(Math.random() * 999) + 1,
       createdAt:           new Date().toISOString(),
       personal:            { ...parent.personal },
       business:            { ...business },
@@ -632,8 +632,11 @@ const App = {
          </div>`;
 
     // Email section HTML (with pre-fill on edit)
-    const emailInputId   = `email-input-${full.id}`;
-    const emailPassId    = `email-pass-${full.id}`;
+    // Sanitize ID for safe CSS selector use (remove dots from float IDs)
+    const safeId         = String(full.id).replace(/\./g, '_');
+    const emailInputId   = `email-input-${safeId}`;
+    const emailPassId    = `email-pass-${safeId}`;
+    const refInputId2    = `ref-input-${safeId}`;
     const hasEmail       = !!full.manualEmail;
     const isEditingEmail = this._emailEditIds.has(full.id);
 
@@ -661,7 +664,7 @@ const App = {
       </div>`;
 
     // Reference number section
-    const refInputId = `ref-input-${full.id}`;
+    const refInputId = refInputId2;
     const referenceHTML = full.status === 'pending'
       ? `<div class="card-data-section reference-section">
            <div class="section-label">📑 Reference number</div>
@@ -912,8 +915,8 @@ const App = {
     const genEmailBtn = card.querySelector('.btn-generate-email');
     if (genEmailBtn) {
       genEmailBtn.addEventListener('click', () => {
-        // If inputs not visible yet — switch to edit mode, then fill
-        let emailInput = card.querySelector(`#${emailInputId}`);
+        // Use attribute selector to avoid CSS issues with special chars in IDs
+        let emailInput = card.querySelector(`[id="${emailInputId}"]`);
         if (!emailInput) {
           this._emailEditIds.add(full.id);
           this._updateCard(full.id);
@@ -921,15 +924,15 @@ const App = {
           requestAnimationFrame(() => {
             const updatedCard = document.querySelector(`.result-card[data-id="${full.id}"]`);
             if (!updatedCard) return;
-            const ni = updatedCard.querySelector(`#${emailInputId}`);
-            const np = updatedCard.querySelector(`#${emailPassId}`);
+            const ni = updatedCard.querySelector(`[id="${emailInputId}"]`);
+            const np = updatedCard.querySelector(`[id="${emailPassId}"]`);
             if (ni) ni.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
             if (np) np.value = this._generatePassword();
           });
           return;
         }
         emailInput.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
-        const passInput = card.querySelector(`#${emailPassId}`);
+        const passInput = card.querySelector(`[id="${emailPassId}"]`);
         if (passInput) passInput.value = this._generatePassword();
       });
     }
