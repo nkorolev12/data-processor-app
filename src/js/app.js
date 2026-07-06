@@ -913,17 +913,20 @@ const App = {
     const genEmailBtn = card.querySelector('.btn-generate-email');
     if (genEmailBtn) {
       genEmailBtn.addEventListener('click', () => {
-        // If inputs are not yet visible (email not in edit mode), switch to edit mode first
+        // If inputs not visible yet — switch to edit mode, then fill
         let emailInput = card.querySelector(`#${emailInputId}`);
         if (!emailInput) {
           this._emailEditIds.add(full.id);
-          const newCard = this._buildCard(full, this.readyFulls.indexOf(full));
-          card.parentNode.replaceChild(newCard, card);
-          // After re-render, find and fill inputs in the new card
-          const ni = newCard.querySelector(`#${emailInputId}`);
-          const np = newCard.querySelector(`#${emailPassId}`);
-          if (ni) ni.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
-          if (np) np.value = this._generatePassword();
+          this._updateCard(full.id);
+          // Wait one frame for DOM to update, then fill
+          requestAnimationFrame(() => {
+            const updatedCard = document.querySelector(`.result-card[data-id="${full.id}"]`);
+            if (!updatedCard) return;
+            const ni = updatedCard.querySelector(`#${emailInputId}`);
+            const np = updatedCard.querySelector(`#${emailPassId}`);
+            if (ni) ni.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
+            if (np) np.value = this._generatePassword();
+          });
           return;
         }
         emailInput.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
@@ -1192,7 +1195,7 @@ const App = {
       numStr += Math.floor(Math.random() * 10).toString();
     }
     
-    const domain = 'outlook.com';
+    const domain = 'hotmail.com';
     return `${fn}${ln}${numStr}@${domain}`;
   },
 
