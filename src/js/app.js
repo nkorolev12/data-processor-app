@@ -915,25 +915,39 @@ const App = {
     const genEmailBtn = card.querySelector('.btn-generate-email');
     if (genEmailBtn) {
       genEmailBtn.addEventListener('click', () => {
-        // Use attribute selector to avoid CSS issues with special chars in IDs
         let emailInput = card.querySelector(`[id="${emailInputId}"]`);
+
+        const fillEmail = (inputEl) => {
+          const current = inputEl ? inputEl.value : '';
+          if (current && current.includes('@')) {
+            // Already has generated email → append random letter (not same as last)
+            const [login, domain] = current.split('@');
+            const lastChar = login[login.length - 1];
+            const pool = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => c !== lastChar);
+            const randomChar = pool[Math.floor(Math.random() * pool.length)];
+            inputEl.value = `${login}${randomChar}@${domain}`;
+          } else {
+            // First generation — from name
+            if (inputEl) inputEl.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
+          }
+          const passEl = (inputEl ? inputEl.closest('.email-input-group') : null)?.querySelector(`[id="${emailPassId}"]`)
+                      || card.querySelector(`[id="${emailPassId}"]`);
+          if (passEl) passEl.value = this._generatePassword();
+        };
+
         if (!emailInput) {
+          // Switch to edit mode first, then fill
           this._emailEditIds.add(full.id);
           this._updateCard(full.id);
-          // Wait one frame for DOM to update, then fill
           requestAnimationFrame(() => {
             const updatedCard = document.querySelector(`.result-card[data-id="${full.id}"]`);
             if (!updatedCard) return;
             const ni = updatedCard.querySelector(`[id="${emailInputId}"]`);
-            const np = updatedCard.querySelector(`[id="${emailPassId}"]`);
-            if (ni) ni.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
-            if (np) np.value = this._generatePassword();
+            fillEmail(ni);
           });
           return;
         }
-        emailInput.value = this._generateEmail(full.personal.firstName, full.personal.lastName);
-        const passInput = card.querySelector(`[id="${emailPassId}"]`);
-        if (passInput) passInput.value = this._generatePassword();
+        fillEmail(emailInput);
       });
     }
 
