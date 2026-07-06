@@ -41,7 +41,7 @@ const ProxyGenerator = {
    */
   generateFlashProxy(stateCode) {
     const state = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
-    const token = this._randomSession(8);
+    const token = DataUtils.generateToken(8, 8);
     return `adam.flashproxy.io:1080:yezrwnhnxwfk-country-US-state-${state}-speed-fast-pool-unlocked-session-${token}-time-long:mihe6hpqdspy`;
   },
 
