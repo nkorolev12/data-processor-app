@@ -1126,7 +1126,6 @@ const App = {
     lines.push(`${p.email},`);
     lines.push(phone ? `${phone},` : '');
     lines.push('');
-    lines.push('');
 
     if (b) lines.push(b.raw.replace(/,/g, ''));
 
@@ -1165,7 +1164,7 @@ const App = {
         : full.manualEmail);
     }
 
-    lines.push('saving+checking');
+    lines.push('checking');
 
     if (full.secondaryIndex !== null && full.secondaryIndex !== undefined) {
       lines.push(`Вторяк ${full.secondaryIndex}`);
