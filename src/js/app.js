@@ -469,6 +469,17 @@ const App = {
     full.manualEmail         = emailVal.trim();
     full.manualEmailPassword = passVal.trim();
 
+    // Sync email back to personal full if it had no email originally
+    if (full.personal && !full.personal.email && emailVal.trim()) {
+      full.personal.email = emailVal.trim();
+      // Also update the source personalFull record if it exists
+      const srcPersonal = this.personalFulls.find(p => p.id === full.personal.id);
+      if (srcPersonal && !srcPersonal.email) {
+        srcPersonal.email = emailVal.trim();
+        await DataStorage.savePersonalFulls(this.personalFulls);
+      }
+    }
+
     await DataStorage.saveReadyFulls(this.readyFulls);
     DataUtils.showToast('Почта сохранена ✅');
   },
@@ -503,37 +514,34 @@ const App = {
 
   /* ── Workday Helper ────────────────────────────────────── */
 
-  // Workday: 16:00 MSK to 04:00 MSK next day
+  // Workday: 15:50 MSK to 04:00 MSK next day (16:00 start with 10-min early buffer)
   isCurrentWorkDay(isoDate) {
     if (!isoDate) return false;
     const d = new Date(isoDate);
 
-    // Convert both card time and now to MSK (UTC+3)
-    const cardMsk = new Date(d.getTime() + 3 * 3600 * 1000);
-    const nowMsk  = new Date(Date.now() + 3 * 3600 * 1000);
-
-    // Same MSK calendar date → always show (handles pre-16:00 card creation)
-    if (cardMsk.getUTCFullYear() === nowMsk.getUTCFullYear() &&
-        cardMsk.getUTCMonth()    === nowMsk.getUTCMonth()    &&
-        cardMsk.getUTCDate()     === nowMsk.getUTCDate()) {
-      return true;
-    }
-
-    // Overnight shift: if current time is 00:00–03:59 MSK,
-    // cards from yesterday 16:00+ also belong to "current workday"
+    const now = new Date();
+    const nowMsk = new Date(now.getTime() + 3 * 3600 * 1000);
     const nowH = nowMsk.getUTCHours();
-    if (nowH < 4) {
-      const yesterday = new Date(nowMsk);
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      if (cardMsk.getUTCFullYear() === yesterday.getUTCFullYear() &&
-          cardMsk.getUTCMonth()    === yesterday.getUTCMonth()    &&
-          cardMsk.getUTCDate()     === yesterday.getUTCDate()     &&
-          cardMsk.getUTCHours()    >= 16) {
-        return true;
-      }
-    }
+    const nowM = nowMsk.getUTCMinutes();
 
-    return false;
+    // Start of current workday in MSK: 15:50 (10 min before 16:00)
+    // Using UTC equivalents: 15:50 MSK = 12:50 UTC
+    let wdStart = new Date(Date.UTC(
+      nowMsk.getUTCFullYear(), nowMsk.getUTCMonth(), nowMsk.getUTCDate(),
+      15, 50, 0
+    ));
+    // If current MSK time is 00:00–03:59, workday started yesterday at 15:50
+    if (nowH < 4) wdStart = new Date(wdStart.getTime() - 24 * 3600 * 1000);
+    // End of workday: 04:00 MSK = 01:00 UTC next day (12h10m window)
+    const wdEnd = new Date(wdStart.getTime() + (12 * 60 + 10) * 60 * 1000);
+
+    // Convert to UTC for comparison (wdStart is already in MSK-expressed UTC)
+    // wdStart is "15:50 on MSK date" expressed as UTC offset +3h
+    // So actual UTC = wdStart - 3h
+    const wdStartUTC = new Date(wdStart.getTime() - 3 * 3600 * 1000);
+    const wdEndUTC   = new Date(wdEnd.getTime()   - 3 * 3600 * 1000);
+
+    return d >= wdStartUTC && d < wdEndUTC;
   },
 
   /* ── Render Ready Fulls ────────────────────────────────── */
