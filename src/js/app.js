@@ -340,6 +340,7 @@ const App = {
     this.renderList('business');
     this.renderReadyFulls();
     this.renderSecondaries();
+    DashboardManager.refresh();
     DataUtils.showToast('Карточка удалена 🗑️');
   },
 
@@ -376,7 +377,8 @@ const App = {
 
     this.renderList('personal');
     this.renderReadyFulls();
-    DataUtils.showToast('Карточка создана! ✨');
+    DashboardManager.refresh();
+    DataUtils.showToast('Карточка создана ✅');
   },
 
   /* ── Create Secondary Card (Вторяк) ───────────────────── */
@@ -431,7 +433,8 @@ const App = {
     this.renderList('business');
     this.renderReadyFulls();
     this.renderSecondaries();
-    DataUtils.showToast(`Вторяк ${secondary.secondaryIndex} создан! ✨`);
+    DashboardManager.refresh();
+    DataUtils.showToast(`Вторяк ${secondary.secondaryIndex} создан! 🎉`);
   },
 
   /* ── Attach Business to Card ───────────────────────────── */
@@ -1187,6 +1190,7 @@ const App = {
     ]);
 
     this._updateCard(fullId);
+    DashboardManager.refresh();
 
     const labels = { done: 'Сделано ✅', pending: 'Пендинг ⏳', rejected: 'Отказ ❌' };
     DataUtils.showToast(labels[status]);
