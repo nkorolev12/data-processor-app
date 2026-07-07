@@ -165,14 +165,13 @@ body {
 .tab-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 22px;
+  padding: 10px 16px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all var(--transition);
@@ -190,7 +189,7 @@ body {
 }
 
 .tab-icon {
-  font-size: 1rem;
+  font-size: 1.4rem;
 }
 
 /* ── Pages ─────────────────────────────────────────────────── */
@@ -345,7 +344,7 @@ body {
 /* ── Columns Layout ────────────────────────────────────────── */
 .columns-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   margin-bottom: 28px;
 }
@@ -358,6 +357,7 @@ body {
   padding: 20px;
   transition: border-color var(--transition);
   contain: layout style;
+  min-width: 0;
 }
 .column:hover {
   border-color: var(--border-hover);
