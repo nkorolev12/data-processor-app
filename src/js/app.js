@@ -330,11 +330,25 @@ const App = {
 
     this.readyFulls.splice(idx, 1);
 
-    await Promise.all([
+    // If card had a status — decrement the statistics counter
+    const saves = [
       DataStorage.savePersonalFulls(this.personalFulls),
       DataStorage.saveBusinessFulls(this.businessFulls),
       DataStorage.saveReadyFulls(this.readyFulls)
-    ]);
+    ];
+    if (full.status && full.statusDate) {
+      const stats = await DataStorage.loadStatistics();
+      const day = full.statusDate;
+      if (stats[day]) {
+        stats[day].total    = Math.max(0, (stats[day].total    || 0) - 1);
+        stats[day].done     = Math.max(0, (stats[day].done     || 0) - (full.status === 'done'     ? 1 : 0));
+        stats[day].pending  = Math.max(0, (stats[day].pending  || 0) - (full.status === 'pending'  ? 1 : 0));
+        stats[day].rejected = Math.max(0, (stats[day].rejected || 0) - (full.status === 'rejected' ? 1 : 0));
+        saves.push(DataStorage.saveStatistics(stats));
+      }
+    }
+
+    await Promise.all(saves);
 
     this.renderList('personal');
     this.renderList('business');
