@@ -176,16 +176,41 @@ const DataParser = {
     const trimmed = line.trim();
     if (!trimmed) return null;
 
-    const parts = trimmed.split(/\s{2,}/);
-    if (parts.length < 3) return null;
+    // Try finding EIN (XX-XXXXXXX) and Date (MM/DD/YYYY) anywhere in the string
+    const einMatch = trimmed.match(/\b(\d{2}-\d{7})\b/);
+    const dateMatch = trimmed.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
 
-    return {
-      raw:         trimmed,
-      companyName: parts[0].trim(),
-      ein:         parts[1].trim(),
-      date:        parts[2].trim(),
-      used:        false
-    };
+    if (einMatch && dateMatch) {
+      // Company name is everything before the EIN
+      let companyName = trimmed.substring(0, einMatch.index).trim();
+      
+      // Clean up any trailing commas or hyphens from company name
+      companyName = companyName.replace(/[,;-]+$/, '').trim();
+
+      return {
+        raw:         trimmed,
+        companyName: companyName,
+        ein:         einMatch[1],
+        date:        dateMatch[1],
+        used:        false
+      };
+    }
+
+    // Fallback: CSV format fallback
+    const csvParts = this._parseCSVLine(trimmed);
+    if (csvParts.length >= 3) {
+      if (csvParts[1].match(/^\d{2}-\d{7}$/)) {
+        return {
+          raw:         trimmed,
+          companyName: csvParts[0].trim(),
+          ein:         csvParts[1].trim(),
+          date:        csvParts[2].trim(),
+          used:        false
+        };
+      }
+    }
+
+    return { error: 'Не удалось найти EIN (XX-XXXXXXX) или дату' };
   },
 
   /**
