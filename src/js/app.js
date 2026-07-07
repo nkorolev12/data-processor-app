@@ -143,18 +143,42 @@ const App = {
     const raw = textarea.value.trim();
     if (!raw) { DataUtils.showToast('Вставьте данные!'); return; }
 
-    const lines  = raw.split('\n').filter(l => l.trim());
     const parsed = [];
 
-    for (const line of lines) {
-      let item = null;
-      if (type === 'personal') item = DataParser.parsePersonalFull(line);
-      if (type === 'business') item = DataParser.parseBusinessFull(line);
-
-      if (item) {
-        item.id   = Date.now() + Math.random();
-        item.used = false;
-        parsed.push(item);
+    if (type === 'personal' && /^SSN[:\s]/im.test(raw)) {
+      // ── Multiline block format (SSN: / DOB: markers present)
+      const blocks = raw.split(/\n\s*\n/).filter(b => b.trim());
+      for (const block of blocks) {
+        const item = DataParser.parseMultilinePersonalBlock(block);
+        if (item) {
+          item.id   = Date.now() + Math.random();
+          item.used = false;
+          parsed.push(item);
+        }
+      }
+    } else if (type === 'business' && /^EIN\s*Number|^Date\s*Filed/im.test(raw)) {
+      // ── Multiline block format for business (EIN Number / Date Filed markers)
+      const blocks = raw.split(/\n\s*\n/).filter(b => b.trim());
+      for (const block of blocks) {
+        const item = DataParser.parseMultilineBusinessBlock(block);
+        if (item) {
+          item.id   = Date.now() + Math.random();
+          item.used = false;
+          parsed.push(item);
+        }
+      }
+    } else {
+      // ── Single-line CSV format (existing logic)
+      const lines = raw.split('\n').filter(l => l.trim());
+      for (const line of lines) {
+        let item = null;
+        if (type === 'personal') item = DataParser.parsePersonalFull(line);
+        if (type === 'business') item = DataParser.parseBusinessFull(line);
+        if (item) {
+          item.id   = Date.now() + Math.random();
+          item.used = false;
+          parsed.push(item);
+        }
       }
     }
 

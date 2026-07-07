@@ -181,5 +181,136 @@ const DataParser = {
       date:        parts[2].trim(),
       used:        false
     };
+  },
+
+  /**
+   * Parse a multiline personal block.
+   * Format (each on its own line, blocks separated by blank lines):
+   *   7028261439
+   *   Stephanie Scott
+   *   Apr 1997               (ignored)
+   *   3319 Esters Rd #1093
+   *   Irving, TX 75062
+   *   Dallas County          (ignored)
+   *   (Nov 2023 - Apr 2026)  (ignored)
+   *   xcstephanie13@yahoo.com
+   *   SSN: 321-94-8574
+   *   DOB: 04/06/1997
+   */
+  parseMultilinePersonalBlock(block) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 4) return null;
+
+    let ssn = '', dob = '', email = '', phone = '', firstName = '', lastName = '',
+        address = '', city = '', state = '', zip = '';
+
+    for (const line of lines) {
+      // SSN line
+      if (/^SSN[:\s]/i.test(line)) {
+        ssn = line.replace(/^SSN[:\s]+/i, '').trim();
+        continue;
+      }
+      // DOB line
+      if (/^DOB[:\s]/i.test(line)) {
+        dob = line.replace(/^DOB[:\s]+/i, '').trim();
+        continue;
+      }
+      // Email
+      if (line.includes('@')) {
+        email = line.trim();
+        continue;
+      }
+      // Skip date ranges like (Nov 2023 - Apr 2026)
+      if (/^\(/.test(line)) continue;
+      // Skip county lines
+      if (/county/i.test(line)) continue;
+      // Skip lines that look like "Month YYYY" alone
+      if (/^[A-Za-z]+ \d{4}$/.test(line)) continue;
+      // Phone: 10 digits or formatted
+      if (!phone && /^[\d()+\-\s]{7,15}$/.test(line) && line.replace(/\D/g,'').length >= 7) {
+        phone = line.replace(/\D/g, '');
+        continue;
+      }
+      // City, State ZIP: "Irving, TX 75062"
+      const cityMatch = line.match(/^(.+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+      if (cityMatch) {
+        city  = cityMatch[1].trim();
+        state = cityMatch[2].trim();
+        zip   = cityMatch[3].trim();
+        continue;
+      }
+      // Name: two or more Title-case words (no digits, no comma)
+      if (!firstName && /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/.test(line) && !line.includes(',')) {
+        const parts = line.trim().split(/\s+/);
+        firstName = this._toTitleCase(parts[0]);
+        lastName  = this._toTitleCase(parts[parts.length - 1]);
+        continue;
+      }
+      // Address: starts with a number
+      if (!address && /^\d/.test(line)) {
+        address = line;
+        continue;
+      }
+    }
+
+    if (!firstName || !lastName || !ssn || !dob) return null;
+
+    return {
+      raw:       block.replace(/\n/g, ' | ').trim(),
+      dob,
+      ssn,
+      firstName,
+      lastName,
+      address,
+      city,
+      zip,
+      state:     state.toUpperCase(),
+      email,
+      phone,
+      extra:     '',
+      used:      false
+    };
+  },
+
+  /**
+   * Parse a multiline business block.
+   * Format:
+   *   ACHANES LLC
+   *
+   *   EIN Number 25-0389230
+   *   Date Filed 03/13/2023
+   */
+  parseMultilineBusinessBlock(block) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return null;
+
+    let companyName = '', ein = '', date = '';
+
+    for (const line of lines) {
+      // EIN line
+      if (/^EIN\s*(Number|#|:)?/i.test(line)) {
+        ein = line.replace(/^EIN\s*(Number|#|:)?\s*/i, '').trim();
+        continue;
+      }
+      // Date Filed line
+      if (/^Date\s*Filed/i.test(line)) {
+        date = line.replace(/^Date\s*Filed\s*/i, '').trim();
+        continue;
+      }
+      // First non-empty line that's not EIN/Date → company name
+      if (!companyName) {
+        companyName = line.trim();
+      }
+    }
+
+    if (!companyName || !ein) return null;
+
+    return {
+      raw:         block.replace(/\n/g, ' | ').trim(),
+      companyName,
+      ein,
+      date,
+      used:        false
+    };
   }
 };
