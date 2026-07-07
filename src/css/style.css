@@ -60,7 +60,9 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow-x: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+  min-width: 320px;
   min-height: 100vh;
   overscroll-behavior: none;
 }

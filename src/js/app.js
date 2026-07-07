@@ -339,6 +339,7 @@ const App = {
     this.renderList('personal');
     this.renderList('business');
     this.renderReadyFulls();
+    this.renderSecondaries();
     DataUtils.showToast('Карточка удалена 🗑️');
   },
 

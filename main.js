@@ -76,15 +76,15 @@ function loadWinState() {
   try {
     if (fs.existsSync(winStatePath)) {
       const s = JSON.parse(fs.readFileSync(winStatePath, 'utf-8'));
-      // Make sure window fits on screen
+      if (!s.width || !s.height) return null;
+      // Relaxed check: just make sure top-left corner is roughly on screen
       const { screen } = require('electron');
-      const display = screen.getDisplayNearestPoint({ x: s.x, y: s.y });
+      const display = screen.getDisplayNearestPoint({ x: s.x || 0, y: s.y || 0 });
       const b = display.workArea;
-      if (s.x >= b.x && s.y >= b.y &&
-          s.x + s.width <= b.x + b.width &&
-          s.y + s.height <= b.y + b.height) {
-        return s;
-      }
+      // Allow window to be mostly visible (at least 200px of width/height on screen)
+      const visibleX = s.x < b.x + b.width - 200;
+      const visibleY = s.y < b.y + b.height - 100;
+      if (visibleX && visibleY) return s;
     }
   } catch (_) {}
   return null;
@@ -92,8 +92,9 @@ function loadWinState() {
 
 function saveWinState() {
   try {
-    if (!mainWindow || mainWindow.isMinimized() || mainWindow.isMaximized()) return;
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
     const b = mainWindow.getBounds();
+    b.maximized = mainWindow.isMaximized();
     fs.writeFileSync(winStatePath, JSON.stringify(b), 'utf-8');
   } catch (_) {}
 }
@@ -139,11 +140,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.on('close', () => {
-    const b = mainWindow.getBounds();
-    b.maximized = mainWindow.isMaximized();
-    try { fs.writeFileSync(winStatePath, JSON.stringify(b), 'utf-8'); } catch (_) {}
-  });
+  mainWindow.on('close', saveWinState);
 }
 
 // ── IPC Handlers ──────────────────────────────────────────────
@@ -186,8 +183,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // Пользователь пытался запустить вторую копию, восстанавливаем фокус на первую
+  app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
@@ -195,6 +191,8 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(createWindow);
+
+  app.on('before-quit', saveWinState);
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();

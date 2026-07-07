@@ -114,7 +114,8 @@ const DataParser = {
     // ── Format C: 11 fields. Email at index 9.
     // DOB,SSN,First,Middle,Last,Address,City,ZIP,State,Email,Phone
     // Middle can be empty (''), single char ('D'), initials ('L.'), or full word ('Mae')
-    if (len === 11 && parts[9].includes('@')) {
+    // Also handles case where email is empty (parts[9] === '')
+    if (len === 11 && (parts[9].includes('@') || (parts[9] === '' && /^\d{7,}/.test(parts[10].replace(/\D/g,''))))) {
       const firstName = this._toTitleCase(parts[2]);
       const lastName  = this._toTitleCase(parts[4]);
       if (!firstName || !lastName) return null;
