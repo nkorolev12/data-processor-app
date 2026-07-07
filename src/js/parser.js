@@ -65,13 +65,17 @@ const DataParser = {
     const parts = this._parseCSVLine(line);
     const len   = parts.length;
 
-    if (len < 10) return null;
+    if (len < 10) return { error: `Слишком мало полей (найдено ${len}, нужно 10+)` };
 
+    // Common validations
+    const isValidSSN = s => s && (s.includes('-') || s.replace(/\D/g, '').length === 9);
+    
     // ── Format A: 13+ fields (original with State2 + bank)
-    if (len >= 13 && parts[10].includes('@')) {
+    if (len >= 13) {
+      if (!isValidSSN(parts[1])) return { error: 'Неверный формат SSN (формат 13+ полей)' };
       const firstName = this._toTitleCase(parts[2]);
       const lastName  = this._toTitleCase(parts[4]);
-      if (!firstName || !lastName) return null;
+      if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
       return {
         raw:       line.trim(),
         dob:       parts[0],
@@ -90,10 +94,11 @@ const DataParser = {
     }
 
     // ── Format B: 12 fields (State2, no bank). Email at index 10.
-    if (len === 12 && parts[10].includes('@')) {
+    if (len === 12) {
+      if (!isValidSSN(parts[1])) return { error: 'Неверный формат SSN (формат 12 полей)' };
       const firstName = this._toTitleCase(parts[2]);
       const lastName  = this._toTitleCase(parts[4]);
-      if (!firstName || !lastName) return null;
+      if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
       return {
         raw:       line.trim(),
         dob:       parts[0],
@@ -111,14 +116,13 @@ const DataParser = {
       };
     }
 
-    // ── Format C: 11 fields. Email at index 9.
+    // ── Format C: 11 fields. Email at index 9, Phone at 10.
     // DOB,SSN,First,Middle,Last,Address,City,ZIP,State,Email,Phone
-    // Middle can be empty (''), single char ('D'), initials ('L.'), or full word ('Mae')
-    // Also handles case where email is empty (parts[9] === '')
-    if (len === 11 && (parts[9].includes('@') || (parts[9] === '' && /^\d{7,}/.test(parts[10].replace(/\D/g,''))))) {
+    if (len === 11) {
+      if (!isValidSSN(parts[1])) return { error: 'Неверный формат SSN (формат 11 полей)' };
       const firstName = this._toTitleCase(parts[2]);
       const lastName  = this._toTitleCase(parts[4]);
-      if (!firstName || !lastName) return null;
+      if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
       return {
         raw:       line.trim(),
         dob:       parts[0],
@@ -138,10 +142,11 @@ const DataParser = {
 
     // ── Format D: 10 fields, no middle name. Email at index 8.
     // DOB,SSN,First,Last,Address,City,ZIP,State,Email,Phone
-    if (len === 10 && parts[8].includes('@')) {
+    if (len === 10) {
+      if (!isValidSSN(parts[1])) return { error: 'Неверный формат SSN (формат 10 полей)' };
       const firstName = this._toTitleCase(parts[2]);
       const lastName  = this._toTitleCase(parts[3]);
-      if (!firstName || !lastName) return null;
+      if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
       return {
         raw:       line.trim(),
         dob:       parts[0],
@@ -159,7 +164,7 @@ const DataParser = {
       };
     }
 
-    return null;
+    return { error: 'Неизвестный формат строки' };
   },
 
   /**

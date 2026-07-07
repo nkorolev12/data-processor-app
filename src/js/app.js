@@ -144,16 +144,19 @@ const App = {
     if (!raw) { DataUtils.showToast('Вставьте данные!'); return; }
 
     const parsed = [];
+    const errors = [];
 
     if (type === 'personal' && /^SSN[:\s]/im.test(raw)) {
       // ── Multiline block format (SSN: / DOB: markers present)
       const blocks = raw.split(/\n\s*\n/).filter(b => b.trim());
       for (const block of blocks) {
         const item = DataParser.parseMultilinePersonalBlock(block);
-        if (item) {
+        if (item && !item.error) {
           item.id   = Date.now() + Math.random();
           item.used = false;
           parsed.push(item);
+        } else if (item && item.error) {
+          errors.push(item.error);
         }
       }
     } else if (type === 'business' && /^EIN\s*Number|^Date\s*Filed/im.test(raw)) {
@@ -161,10 +164,12 @@ const App = {
       const blocks = raw.split(/\n\s*\n/).filter(b => b.trim());
       for (const block of blocks) {
         const item = DataParser.parseMultilineBusinessBlock(block);
-        if (item) {
+        if (item && !item.error) {
           item.id   = Date.now() + Math.random();
           item.used = false;
           parsed.push(item);
+        } else if (item && item.error) {
+          errors.push(item.error);
         }
       }
     } else {
@@ -174,16 +179,23 @@ const App = {
         let item = null;
         if (type === 'personal') item = DataParser.parsePersonalFull(line);
         if (type === 'business') item = DataParser.parseBusinessFull(line);
-        if (item) {
+        
+        if (item && !item.error) {
           item.id   = Date.now() + Math.random();
           item.used = false;
           parsed.push(item);
+        } else if (item && item.error) {
+          errors.push(item.error);
         }
       }
     }
 
     if (!parsed.length) {
-      DataUtils.showToast('Не удалось распознать данные');
+      if (errors.length > 0) {
+        DataUtils.showToast(`Ошибка: ${errors[0]}`);
+      } else {
+        DataUtils.showToast('Не удалось распознать данные');
+      }
       return;
     }
 
@@ -527,7 +539,16 @@ const App = {
   async savePhone(fullId, phoneVal) {
     const full = this.readyFulls.find(f => f.id === fullId);
     if (!full) return;
+
     full.personal.phone = phoneVal.trim();
+
+    // Sync phone back to personal full if it had no phone originally
+    const srcPersonal = this.personalFulls.find(p => p.id === full.personal.id);
+    if (srcPersonal && !srcPersonal.phone) {
+      srcPersonal.phone = phoneVal.trim();
+      await DataStorage.savePersonalFulls(this.personalFulls);
+    }
+
     await DataStorage.saveReadyFulls(this.readyFulls);
     DataUtils.showToast('Телефон сохранён ✅');
   },
