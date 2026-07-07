@@ -239,8 +239,8 @@ const DataParser = {
         zip   = cityMatch[3].trim();
         continue;
       }
-      // Name: two or more Title-case words (no digits, no comma)
-      if (!firstName && /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/.test(line) && !line.includes(',')) {
+      // Name: two or more words starting with capital (allows initials like "C")
+      if (!firstName && /^[A-Z][a-z]*(?:\s+[A-Z][a-z]*)+$/.test(line) && !line.includes(',')) {
         const parts = line.trim().split(/\s+/);
         firstName = this._toTitleCase(parts[0]);
         lastName  = this._toTitleCase(parts[parts.length - 1]);

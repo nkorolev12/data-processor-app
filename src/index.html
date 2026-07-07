@@ -26,24 +26,10 @@
         <img src="icon.png" class="logo-icon-img" alt="icon">
         <span class="logo-text">Data Processor</span>
         <span id="app-version" class="app-version-text"></span>
-      </div>
-      <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="processing">
-          <span class="tab-icon">📋</span><span>Обработка</span>
-        </button>
-        <button class="tab-btn" data-tab="secondaries">
-          <span class="tab-icon">🔁</span><span>Вторяки</span><span id="secondaries-badge" class="tab-badge" style="display:none"></span>
-        </button>
-        <button class="tab-btn" data-tab="dashboard">
-          <span class="tab-icon">📊</span><span>Дашборд</span>
-        </button>
-      </nav>
-      <div class="header-spacer"></div>
-
-      <!-- ── Settings Button & Panel ── -->
-      <div class="settings-wrapper">
-        <button id="btn-settings" class="btn-settings" title="Настройки внешнего вида">⚙️</button>
-        <div id="settings-panel" class="settings-panel">
+        <!-- ── Settings Button & Panel (next to version) ── -->
+        <div class="settings-wrapper">
+          <button id="btn-settings" class="btn-settings" title="Настройки внешнего вида">⚙️</button>
+          <div id="settings-panel" class="settings-panel">
           <div class="settings-section">
             <div class="settings-label">🎨 Тема</div>
             <div class="theme-grid">
@@ -67,6 +53,17 @@
           </div>
         </div>
       </div>
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="processing">
+          <span class="tab-icon">📋</span><span>Обработка</span>
+        </button>
+        <button class="tab-btn" data-tab="secondaries">
+          <span class="tab-icon">🔁</span><span>Вторяки</span><span id="secondaries-badge" class="tab-badge" style="display:none"></span>
+        </button>
+        <button class="tab-btn" data-tab="dashboard">
+          <span class="tab-icon">📊</span><span>Дашборд</span>
+        </button>
+      </nav>
     </header>
 
     <!-- ── Processing Page ───────────────────────────────── -->
@@ -187,6 +184,13 @@
           </table>
         </div>
       </div>
+
+      <!-- Today's Cards List -->
+      <div class="today-cards-section glass-card">
+        <h3>📋 Карточки сегодня</h3>
+        <div id="today-cards-list" class="today-cards-list"></div>
+      </div>
+
     </main>
   </div>
 

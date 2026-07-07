@@ -13,6 +13,7 @@ const DashboardManager = {
     this.renderKPI();
     this.renderChart();
     this.renderTable();
+    await this.renderTodayCards();
   },
 
   /* ── KPI Cards ─────────────────────────────────────────── */
@@ -174,6 +175,8 @@ const DashboardManager = {
 
   /* ── History Table ─────────────────────────────────────── */
 
+  /* ── History Table ─────────────────────────────────────── */
+
   renderTable() {
     const tbody  = document.getElementById('stats-table-body');
     const period = parseInt(document.getElementById('period-select').value);
@@ -201,5 +204,39 @@ const DashboardManager = {
     if (!hasData) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty-table">Нет данных за выбранный период</td></tr>';
     }
+  },
+
+  /* ── Today's Cards List ───────────────────────────────────── */
+
+  async renderTodayCards() {
+    const container = document.getElementById('today-cards-list');
+    if (!container) return;
+
+    const readyFulls = await DataStorage.loadReadyFulls();
+    const statusLabel = { done: 'Сделано', pending: 'Пендинг', rejected: 'Отказ' };
+
+    // Filter: have a status AND were created today (MSK)
+    const todayCards = readyFulls.filter(f => f.status && App && App.isCurrentWorkDay(f.createdAt));
+
+    if (!todayCards.length) {
+      container.innerHTML = '<div class="today-cards-empty">Нет карточек за сегодняшний рабочий день</div>';
+      return;
+    }
+
+    // Sort oldest first so #1 is the first card of the day
+    const sorted = [...todayCards].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    container.innerHTML = sorted.map((f, idx) => {
+      const num    = idx + 1;
+      const name   = `${f.personal?.firstName || ''} ${f.personal?.lastName || ''}`.trim();
+      const status = f.status;
+      const label  = statusLabel[status] || status;
+      return `
+        <div class="today-card-row">
+          <span class="today-card-num">#${num}</span>
+          <span class="today-card-name">${name}</span>
+          <span class="today-card-status ${status}">${label}</span>
+        </div>`;
+    }).join('');
   }
 };
