@@ -507,32 +507,33 @@ const App = {
   isCurrentWorkDay(isoDate) {
     if (!isoDate) return false;
     const d = new Date(isoDate);
-    // MSK = UTC+3
-    const mskOffset = 3 * 60; // minutes
-    const mskMs = d.getTime() + (mskOffset - (d.getTimezoneOffset() * -1)) * 60000;
-    // Simpler: just get MSK time directly
-    const msk = new Date(d.getTime() + 3 * 3600 * 1000);
-    const mskH = msk.getUTCHours();
-    const mskDate = msk.getUTCDate();
-    const mskMonth = msk.getUTCMonth();
-    const mskYear = msk.getUTCFullYear();
 
-    const now = new Date();
-    const nowMsk = new Date(now.getTime() + 3 * 3600 * 1000);
+    // Convert both card time and now to MSK (UTC+3)
+    const cardMsk = new Date(d.getTime() + 3 * 3600 * 1000);
+    const nowMsk  = new Date(Date.now() + 3 * 3600 * 1000);
+
+    // Same MSK calendar date → always show (handles pre-16:00 card creation)
+    if (cardMsk.getUTCFullYear() === nowMsk.getUTCFullYear() &&
+        cardMsk.getUTCMonth()    === nowMsk.getUTCMonth()    &&
+        cardMsk.getUTCDate()     === nowMsk.getUTCDate()) {
+      return true;
+    }
+
+    // Overnight shift: if current time is 00:00–03:59 MSK,
+    // cards from yesterday 16:00+ also belong to "current workday"
     const nowH = nowMsk.getUTCHours();
+    if (nowH < 4) {
+      const yesterday = new Date(nowMsk);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      if (cardMsk.getUTCFullYear() === yesterday.getUTCFullYear() &&
+          cardMsk.getUTCMonth()    === yesterday.getUTCMonth()    &&
+          cardMsk.getUTCDate()     === yesterday.getUTCDate()     &&
+          cardMsk.getUTCHours()    >= 16) {
+        return true;
+      }
+    }
 
-    // Start of current workday in MSK
-    let wdStart = new Date(Date.UTC(nowMsk.getUTCFullYear(), nowMsk.getUTCMonth(), nowMsk.getUTCDate(), 16, 0, 0));
-    // If current MSK time is 00:00–03:59, workday started yesterday at 16:00
-    if (nowH < 4) wdStart = new Date(wdStart.getTime() - 24 * 3600 * 1000);
-    // End of workday = start + 12h (16:00 → 04:00 = 12 hours)
-    const wdEnd = new Date(wdStart.getTime() + 12 * 3600 * 1000);
-
-    // Convert wdStart/wdEnd back to UTC for comparison with card's createdAt
-    const wdStartUTC = new Date(wdStart.getTime() - 3 * 3600 * 1000);
-    const wdEndUTC   = new Date(wdEnd.getTime()   - 3 * 3600 * 1000);
-
-    return d >= wdStartUTC && d < wdEndUTC;
+    return false;
   },
 
   /* ── Render Ready Fulls ────────────────────────────────── */
