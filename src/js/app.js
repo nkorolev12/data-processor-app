@@ -923,6 +923,8 @@ const App = {
           <div class="footer-tg-actions">
             ${full.status === 'pending' ? `<button class="btn-copy btn-copy-tg btn-tg-pending">📨 ТГ (Пендинг)</button>` : ''}
             ${full.status === 'done'    ? `<button class="btn-copy btn-copy-tg btn-tg-done">📋 ТГ (Сделано)</button>` : ''}
+            ${full.status === 'done'    ? `<button class="btn-copy btn-session-copy" data-session-type="biz">🏢 BAO BIZ</button>` : ''}
+            ${full.status === 'done'    ? `<button class="btn-copy btn-session-copy" data-session-type="mail">📧 MAIL</button>` : ''}
           </div>
           <button class="btn-copy btn-delete-card">🗑️ Удалить</button>
         </div>
@@ -1160,6 +1162,26 @@ const App = {
         setTimeout(() => { tgBtn.textContent = orig; tgBtn.classList.remove('copied'); }, 1500);
       });
     }
+
+    // ── Session name copy buttons (BAO BIZ / MAIL)
+    card.querySelectorAll('.btn-session-copy').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-session-type');
+        const p = full.personal;
+        const name = `${p.firstName} ${p.lastName}`;
+        const secSuffix = (full.secondaryIndex ? ` вторяк ${full.secondaryIndex}` : '');
+
+        let text = '';
+        if (type === 'biz')  text = `${name} bao biz${secSuffix}`;
+        if (type === 'mail') text = `${name} mail${secSuffix}`;
+
+        DataUtils.copyToClipboard(text);
+        const orig = btn.textContent;
+        btn.textContent = '✅ Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+      });
+    });
 
     // ── Create secondary button
     const createSecBtn = card.querySelector('.btn-create-secondary');
