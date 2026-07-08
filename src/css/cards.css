@@ -439,6 +439,16 @@
   word-break: break-all;
 }
 
+.copyable {
+  cursor: pointer;
+  border-bottom: 1px dashed rgba(255,255,255,0.25);
+  transition: color 0.15s, border-color 0.15s;
+}
+.copyable:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .btn-edit-email,
 .btn-edit-phone {
   flex-shrink: 0;

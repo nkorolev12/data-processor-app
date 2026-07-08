@@ -716,11 +716,18 @@ const App = {
       <div class="card-data-section email-section">
         <div class="section-label">📧 Почта</div>
         ${(hasEmail && !isEditingEmail)
-          ? `<div class="data-line email-display">
+          ? (() => {
+              const login  = full.manualEmail.split('@')[0];
+              const domain = full.manualEmail.split('@').slice(1).join('@');
+              const pass   = full.manualEmailPassword || '';
+              return `<div class="data-line email-display">
                <span class="data-icon">📧</span>
-               <span class="email-value">${this._esc(full.manualEmail)}${full.manualEmailPassword ? ':' + this._esc(full.manualEmailPassword) : ''}</span>
+               <span class="email-value">
+                 <span class="email-login copyable" title="Нажмите чтобы скопировать логин" data-copy="${this._esc(login)}">${this._esc(login)}</span>@${this._esc(domain)}${pass ? ':' + `<span class="email-pass copyable" title="Нажмите чтобы скопировать пароль" data-copy="${this._esc(pass)}">${this._esc(pass)}</span>` : ''}
+               </span>
                <button class="btn-edit-email" data-full-id="${full.id}">✏️</button>
-             </div>`
+             </div>`;
+            })()
           : (full.status !== null && !hasEmail)
             ? `<div class="data-line"><span class="data-icon">📧</span><span class="text-empty">не указана</span></div>`
             : `<div class="email-input-group">
@@ -990,35 +997,52 @@ const App = {
         let emailInput = card.querySelector(`[id="${emailInputId}"]`);
 
         const fillEmail = (inputEl) => {
-          // Base email from name (deterministic — no randomness in _generateEmail)
-          const baseEmail = this._generateEmail(full.personal.firstName, full.personal.lastName);
+          // For secondaries 2+, use reversed name (lastName+firstName)
+          const isReversed = (full.secondaryIndex >= 2);
+          const baseEmail = this._generateEmail(
+            full.personal.firstName, full.personal.lastName, isReversed
+          );
           const [baseLogin, domain] = baseEmail.split('@');
+
+          // Collect all logins already used by sibling secondaries and parent
+          const siblingLogins = new Set();
+          if (full.parentId) {
+            this.readyFulls
+              .filter(f => (f.parentId === full.parentId || f.id === full.parentId) && f.id !== full.id)
+              .forEach(f => {
+                if (f.manualEmail) {
+                  siblingLogins.add(f.manualEmail.split('@')[0].toLowerCase());
+                }
+              });
+          }
+
           const current = inputEl ? inputEl.value.trim() : '';
 
           let newLogin;
           if (!current || !current.includes('@')) {
-            // Empty field → first generation, just the base
-            newLogin = baseLogin;
+            // Empty field → first generation
+            newLogin = siblingLogins.has(baseLogin) ? baseLogin + _pickLetter(baseLogin, siblingLogins) : baseLogin;
           } else {
             const [currentLogin] = current.split('@');
             const hasAddedLetter = currentLogin.length === baseLogin.length + 1
                                 && currentLogin.startsWith(baseLogin);
 
             if (hasAddedLetter) {
-              // Already has one added letter → replace it with a DIFFERENT random letter
+              // Already has one added letter → replace with a DIFFERENT random letter, also not in siblings
               const currentAdded = currentLogin[currentLogin.length - 1];
               const baseLast    = baseLogin[baseLogin.length - 1];
               const pool = 'abcdefghijklmnopqrstuvwxyz'
-                .split('').filter(c => c !== currentAdded && c !== baseLast);
-              newLogin = baseLogin + pool[Math.floor(Math.random() * pool.length)];
+                .split('').filter(c => c !== currentAdded && c !== baseLast
+                                    && !siblingLogins.has(baseLogin + c));
+              newLogin = pool.length > 0
+                ? baseLogin + pool[Math.floor(Math.random() * pool.length)]
+                : baseLogin + currentAdded; // fallback unchanged
             } else if (currentLogin === baseLogin) {
-              // At base → add one random letter (not same as last char of base)
-              const baseLast = baseLogin[baseLogin.length - 1];
-              const pool = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => c !== baseLast);
-              newLogin = baseLogin + pool[Math.floor(Math.random() * pool.length)];
+              // At base → add one random letter
+              newLogin = baseLogin + _pickLetter(baseLogin, siblingLogins);
             } else {
               // Something unrecognised → restart from base
-              newLogin = baseLogin;
+              newLogin = siblingLogins.has(baseLogin) ? baseLogin + _pickLetter(baseLogin, siblingLogins) : baseLogin;
             }
           }
 
@@ -1026,6 +1050,15 @@ const App = {
           const passEl = card.querySelector(`[id="${emailPassId}"]`);
           if (passEl) passEl.value = this._generatePassword();
         };
+
+        // Helper: pick a letter not in the pool of sibling logins
+        function _pickLetter(baseLogin, siblingLogins) {
+          const baseLast = baseLogin[baseLogin.length - 1];
+          const pool = 'abcdefghijklmnopqrstuvwxyz'
+            .split('').filter(c => c !== baseLast && !siblingLogins.has(baseLogin + c));
+          if (pool.length === 0) return 'x'; // extreme fallback
+          return pool[Math.floor(Math.random() * pool.length)];
+        }
 
         if (!emailInput) {
           this._emailEditIds.add(full.id);
@@ -1040,6 +1073,23 @@ const App = {
         fillEmail(emailInput);
       });
     }
+
+    // ── Click-to-copy for login and password spans
+    card.querySelectorAll('.copyable').forEach(el => {
+      el.addEventListener('click', () => {
+        const val = el.getAttribute('data-copy');
+        if (!val) return;
+        navigator.clipboard.writeText(val).then(() => {
+          const prev = el.textContent;
+          el.textContent = '✓';
+          el.style.color = 'var(--success)';
+          setTimeout(() => {
+            el.textContent = prev;
+            el.style.color = '';
+          }, 800);
+        }).catch(() => DataUtils.showToast('Не удалось скопировать'));
+      });
+    });
 
     // ── Save reference button
     const saveRefBtn = card.querySelector('.btn-save-reference');
@@ -1283,15 +1333,15 @@ const App = {
    * firstName + lastName (letters only, no digits/specials).
    * If last letter of firstName == first letter of lastName, skip the duplicate.
    */
-  _generateEmail(firstName, lastName) {
-    const fullName = `${firstName || ''} ${lastName || ''}`.trim();
-    const parts = fullName.split(/\s+/).filter(Boolean);
+  _generateEmail(firstName, lastName, reversed = false) {
+    // For secondary 2+, pass reversed=true: lastName+firstName
+    const fn_raw = (firstName || '').toLowerCase().replace(/[^a-z]/g, '');
+    const ln_raw = (lastName  || '').toLowerCase().replace(/[^a-z]/g, '');
 
-    // Letters only, lowercase
-    let fn = parts.length > 0 ? parts[0].toLowerCase().replace(/[^a-z]/g, '') : '';
-    let ln = parts.length > 1 ? parts[parts.length - 1].toLowerCase().replace(/[^a-z]/g, '') : '';
+    let fn = reversed ? ln_raw : fn_raw;
+    let ln = reversed ? fn_raw : ln_raw;
 
-    // Remove duplicate letter at the junction (e.g. "juliana" + "anderson" → "julianderson")
+    // Remove duplicate letter at the junction
     if (fn && ln && fn[fn.length - 1] === ln[0]) {
       ln = ln.slice(1);
     }
