@@ -400,14 +400,33 @@ const App = {
 
     personal.used = true;
 
-    const stateCode  = personal.state;
+    // Re-parse from raw string to pick up any parser fixes (e.g. swapped zip/state)
+    let freshPersonal = personal;
+    if (personal.raw) {
+      const reparsed = DataParser.parsePersonalFull(personal.raw);
+      if (reparsed && !reparsed.error) {
+        // Merge: keep id, used, and any manually added fields (phone, email)
+        freshPersonal = {
+          ...reparsed,
+          id:    personal.id,
+          used:  true,
+          phone: personal.phone || reparsed.phone || '',
+          email: personal.email || reparsed.email || '',
+        };
+        // Update the stored entry so the list also reflects correct data
+        const idx = this.personalFulls.indexOf(personal);
+        if (idx !== -1) this.personalFulls[idx] = freshPersonal;
+      }
+    }
+
+    const stateCode  = freshPersonal.state;
     const coreProxy  = ProxyGenerator.generateEmailProxy(stateCode);
     const flashProxy = ProxyGenerator.generateFlashProxy(stateCode);
 
     const readyFull = {
       id:         Date.now(),
       createdAt:  new Date().toISOString(),
-      personal:   { ...personal },
+      personal:   { ...freshPersonal },
       business:   null,
       manualEmail: '',
       manualEmailPassword: '',
