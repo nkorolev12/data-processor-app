@@ -64,15 +64,23 @@ const DataParser = {
 
     // ── Colon-separated format detection
     // Format: FirstName [Middle]:LastName:Address:City:ZIP:State:SSN:DOB
+    //    OR:  FirstName [Middle]:LastName:Address:City:State:ZIP:SSN:DOB  (some have them swapped)
     // e.g. "Lindsey Nicole:Casas:9430 Tranquil Park Dr:San Antonio:78254:TX:632-66-9207:04/17/1999"
+    // e.g. "Ashley N:Siner:803 Lincoya Bay Drive:DONELSON:TN:37214:408-87-2309:04/18/1999"
     if (line.includes(':') && !line.includes(',')) {
       const colonParts = line.trim().split(':');
       // Expect exactly 8 colon-delimited fields
       if (colonParts.length === 8) {
-        const firstRaw = colonParts[0].trim().split(/\s+/);
+        const firstRaw  = colonParts[0].trim().split(/\s+/);
         const firstName = this._toTitleCase(firstRaw[0]);
         const lastName  = this._toTitleCase(colonParts[1].trim());
         if (firstName && lastName) {
+          // Auto-detect ZIP vs State by content (state = 2 alpha letters, zip = digits)
+          const f4 = colonParts[4].trim();
+          const f5 = colonParts[5].trim();
+          const isStateAtF4 = /^[A-Za-z]{2}$/.test(f4);
+          const zip   = isStateAtF4 ? f5 : f4;
+          const state = isStateAtF4 ? f4 : f5;
           return {
             raw:       line.trim(),
             dob:       colonParts[7].trim(),
@@ -81,8 +89,8 @@ const DataParser = {
             lastName,
             address:   colonParts[2].trim(),
             city:      colonParts[3].trim(),
-            zip:       colonParts[4].trim(),
-            state:     colonParts[5].trim().toUpperCase(),
+            zip:       zip,
+            state:     state.toUpperCase(),
             email:     '',
             phone:     '',
             extra:     '',
