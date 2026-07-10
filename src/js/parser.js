@@ -62,6 +62,36 @@ const DataParser = {
   parsePersonalFull(line) {
     if (!line || !line.trim()) return null;
 
+    // ── Colon-separated format detection
+    // Format: FirstName [Middle]:LastName:Address:City:ZIP:State:SSN:DOB
+    // e.g. "Lindsey Nicole:Casas:9430 Tranquil Park Dr:San Antonio:78254:TX:632-66-9207:04/17/1999"
+    if (line.includes(':') && !line.includes(',')) {
+      const colonParts = line.trim().split(':');
+      // Expect exactly 8 colon-delimited fields
+      if (colonParts.length === 8) {
+        const firstRaw = colonParts[0].trim().split(/\s+/);
+        const firstName = this._toTitleCase(firstRaw[0]);
+        const lastName  = this._toTitleCase(colonParts[1].trim());
+        if (firstName && lastName) {
+          return {
+            raw:       line.trim(),
+            dob:       colonParts[7].trim(),
+            ssn:       colonParts[6].trim(),
+            firstName,
+            lastName,
+            address:   colonParts[2].trim(),
+            city:      colonParts[3].trim(),
+            zip:       colonParts[4].trim(),
+            state:     colonParts[5].trim().toUpperCase(),
+            email:     '',
+            phone:     '',
+            extra:     '',
+            used:      false
+          };
+        }
+      }
+    }
+
     const parts = this._parseCSVLine(line);
     const len   = parts.length;
 
