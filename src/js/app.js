@@ -41,7 +41,39 @@ const App = {
 
     await DashboardManager.init();
 
+    // One-time migration: fix existing cards where email/phone were misassigned
+    await this._migrateCards();
+
     this.setupUpdateBanner();
+  },
+
+  /* ── One-time Data Migration ───────────────────────────── */
+
+  async _migrateCards() {
+    let dirty = false;
+    for (const rf of this.readyFulls) {
+      const p = rf.personal;
+      if (!p || !p.raw) continue;
+
+      // Fix: email field contains no '@' (was likely a phone number put there by old parser)
+      const emailWrong = p.email && !p.email.includes('@');
+      // Fix: phone field looks like a pure 7-digit extra number (8885336), not a real phone
+      const phoneWrong = p.phone && !/^[\d\s()\-\.+]{7,}$/.test(p.phone);
+
+      if (emailWrong || phoneWrong) {
+        const reparsed = DataParser.parsePersonalFull(p.raw);
+        if (reparsed && !reparsed.error) {
+          p.email = reparsed.email || '';
+          p.phone = reparsed.phone || p.phone;
+          p.extra = reparsed.extra || p.extra;
+          dirty = true;
+        }
+      }
+    }
+    if (dirty) {
+      await DataStorage.saveReadyFulls(this.readyFulls);
+      this.renderReadyFulls();
+    }
   },
 
   /* ── Update Banner ─────────────────────────────────────── */

@@ -383,6 +383,46 @@
   transform: scale(0.97);
 }
 
+/* ── Biz Details Section ──────────────────────────────── */
+.biz-details-textarea {
+  width: 100%;
+  min-height: 90px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.78rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.biz-details-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.btn-biz-details-save,
+.btn-biz-details-edit {
+  margin-top: 6px;
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-biz-details-save:hover,
+.btn-biz-details-edit:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
 .btn-generate-email {
   flex-shrink: 0;
   padding: 8px 14px;

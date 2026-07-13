@@ -103,11 +103,15 @@ const DataParser = {
     const parts = this._parseCSVLine(line);
     const len   = parts.length;
 
-    if (len < 10) return { error: `Слишком мало полей (найдено ${len}, нужно 10+)` };
+    if (len < 6) return { error: `Слишком мало полей (найдено ${len}, нужно 6+)` };
 
-    // Common validations
+    // ── Smart content-based parse (primary path)
+    const smart = this._smartParsePersonal(line);
+    if (smart) return smart;
+
+    // ── Fallback: positional formats (kept for edge cases)
     const isValidSSN = s => s && (s.includes('-') || s.replace(/\D/g, '').length === 9);
-    
+
     // ── Format A: 13+ fields (original with State2 + bank)
     if (len >= 13) {
       if (!isValidSSN(parts[1])) return { error: 'Неверный формат SSN (формат 13+ полей)' };
@@ -232,6 +236,119 @@ const DataParser = {
     }
 
     return { error: 'Неизвестный формат строки' };
+  },
+
+  /**
+   * Classify a single field value by its content.
+   * Returns a type string used by the smart parser.
+   */
+  _detectFieldType(val) {
+    if (!val || !val.trim()) return 'empty';
+    const v = val.trim();
+
+    // SSN: NNN-NN-NNNN
+    if (/^\d{3}-\d{2}-\d{4}$/.test(v)) return 'ssn';
+
+    // DOB: YYYY-MM-DD, YYYY/MM/DD, MM/DD/YYYY, Mon YYYY
+    if (/^\d{4}[-\/]\d{2}[-\/]\d{2}$/.test(v)) return 'dob';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) return 'dob';
+    if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i.test(v)) return 'dob';
+
+    // Email: contains @ and a dot after @
+    if (v.includes('@') && v.indexOf('.', v.indexOf('@')) > 0) return 'email';
+
+    // Phone: 10–11 total digits, may include ()- . spaces
+    const digits = v.replace(/\D/g, '');
+    if (digits.length >= 10 && digits.length <= 11 && /^[\d\s()\-\.]+$/.test(v)) return 'phone';
+
+    // ZIP: exactly 5 digits, optionally +4
+    if (/^\d{5}(-\d{4})?$/.test(v)) return 'zip';
+
+    // State: exactly 2 uppercase letters
+    if (/^[A-Z]{2}$/.test(v)) return 'state';
+
+    // Address: starts with a number followed by a space and more text
+    if (/^\d+\s+\S/.test(v) || /^p\.?o\.?\s*box/i.test(v)) return 'address';
+
+    // Pure long digits (routing / account number / extra)
+    if (/^\d{6,}$/.test(v)) return 'extra';
+
+    return 'text';
+  },
+
+  /**
+   * Smart content-based personal full parser.
+   * Works by classifying each CSV field by its content,
+   * then assembling the record — regardless of column order.
+   */
+  _smartParsePersonal(line) {
+    const parts = this._parseCSVLine(line).map(p => p.trim());
+    if (parts.length < 6) return null;
+
+    // Tag every part with its detected type and original index
+    const tagged = parts.map((v, i) => ({ v, i, type: this._detectFieldType(v) }));
+
+    const first  = t => tagged.find(x => x.type === t);
+    const all    = t => tagged.filter(x => x.type === t);
+
+    const ssnT    = first('ssn');
+    const dobT    = first('dob');
+    const emailT  = first('email');
+    const phoneT  = first('phone');
+    const zipT    = first('zip');
+    const stateTs = all('state');
+    const addrT   = first('address');
+    const extraTs = all('extra');
+
+    if (!ssnT) return null; // SSN is required
+
+    // Collect indices of classified fields
+    const usedIdx = new Set([
+      ssnT?.i, dobT?.i, emailT?.i, phoneT?.i, zipT?.i,
+      addrT?.i,
+      ...stateTs.map(t => t.i),
+      ...extraTs.map(t => t.i),
+    ].filter(x => x != null));
+
+    // Remaining text fields = name parts + city
+    const textFields = tagged.filter(t => !usedIdx.has(t.i) && t.type !== 'empty');
+
+    const addrIdx = addrT ? addrT.i : Infinity;
+    const nameFields = textFields.filter(t => t.i < addrIdx).map(t => t.v);
+    const afterAddr  = textFields.filter(t => t.i > addrIdx).map(t => t.v);
+
+    // Name: first = firstName, last = lastName (middle ignored but accepted)
+    let firstName = '', lastName = '';
+    if (nameFields.length >= 2) {
+      firstName = nameFields[0];
+      lastName  = nameFields[nameFields.length - 1];
+    } else if (nameFields.length === 1) {
+      firstName = nameFields[0];
+    }
+
+    if (!firstName) return null; // must have at least a name
+
+    // City: first text field right after address
+    const city = afterAddr[0] || '';
+
+    // Extra: digits that are not ZIP or State
+    const extra = extraTs.map(t => t.v).join(',');
+
+    return {
+      raw:       line.trim(),
+      dob:       dobT?.v || '',
+      ssn:       ssnT.v,
+      firstName: this._toTitleCase(firstName),
+      lastName:  this._toTitleCase(lastName),
+      address:   addrT?.v || '',
+      city,
+      zip:       zipT?.v || '',
+      state:     (stateTs[0]?.v || '').toUpperCase(),
+      email:     emailT?.v || '',
+      phone:     phoneT?.v || '',
+      extra,
+      used:      false,
+    };
   },
 
   /**
