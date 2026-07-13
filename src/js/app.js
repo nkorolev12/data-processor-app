@@ -41,13 +41,43 @@ const App = {
 
     await DashboardManager.init();
 
-    // One-time migration: fix existing cards where email/phone were misassigned
+    // One-time migrations: fix existing cards where email/phone were misassigned
     await this._migrateCards();
+    await this._migratePersonalFulls();
 
     this.setupUpdateBanner();
   },
 
   /* ── One-time Data Migration ───────────────────────────── */
+
+  async _migratePersonalFulls() {
+    let dirty = false;
+    for (const p of this.personalFulls) {
+      if (!p.raw) continue;
+      const emailWrong = p.email && !p.email.includes('@');
+      const phoneWrong = p.phone && !/^[\d\s()\-\.+]{7,}$/.test(p.phone);
+
+      if (emailWrong || phoneWrong) {
+        const reparsed = DataParser.parsePersonalFull(p.raw);
+        if (reparsed && !reparsed.error) {
+          const keepEmail = p.email && p.email.includes('@') && !reparsed.email;
+          const keepPhone = p.phone && !reparsed.phone;
+          p.email = keepEmail ? p.email : reparsed.email;
+          p.phone = keepPhone ? p.phone : reparsed.phone;
+          p.extra = reparsed.extra || p.extra;
+          // Update city/zip/state too in case they were wrong
+          p.city = reparsed.city || p.city;
+          p.zip = reparsed.zip || p.zip;
+          p.state = reparsed.state || p.state;
+          dirty = true;
+        }
+      }
+    }
+    if (dirty) {
+      await DataStorage.savePersonalFulls(this.personalFulls);
+      this.renderList('personal');
+    }
+  },
 
   async _migrateCards() {
     let dirty = false;
@@ -63,9 +93,14 @@ const App = {
       if (emailWrong || phoneWrong) {
         const reparsed = DataParser.parsePersonalFull(p.raw);
         if (reparsed && !reparsed.error) {
-          p.email = reparsed.email || '';
-          p.phone = reparsed.phone || p.phone;
+          const keepEmail = p.email && p.email.includes('@') && !reparsed.email;
+          const keepPhone = p.phone && !reparsed.phone;
+          p.email = keepEmail ? p.email : reparsed.email;
+          p.phone = keepPhone ? p.phone : reparsed.phone;
           p.extra = reparsed.extra || p.extra;
+          p.city = reparsed.city || p.city;
+          p.zip = reparsed.zip || p.zip;
+          p.state = reparsed.state || p.state;
           dirty = true;
         }
       }
@@ -437,13 +472,16 @@ const App = {
     if (personal.raw) {
       const reparsed = DataParser.parsePersonalFull(personal.raw);
       if (reparsed && !reparsed.error) {
-        // Merge: keep id, used, and any manually added fields (phone, email)
+        // Trust the new smart parser. Only preserve old email if parser found nothing but old had valid email.
+        const keepEmail = personal.email && personal.email.includes('@') && !reparsed.email;
+        const keepPhone = personal.phone && !reparsed.phone;
+
         freshPersonal = {
           ...reparsed,
           id:    personal.id,
           used:  true,
-          phone: personal.phone || reparsed.phone || '',
-          email: personal.email || reparsed.email || '',
+          email: keepEmail ? personal.email : reparsed.email,
+          phone: keepPhone ? personal.phone : reparsed.phone,
         };
         // Update the stored entry so the list also reflects correct data
         const idx = this.personalFulls.indexOf(personal);
