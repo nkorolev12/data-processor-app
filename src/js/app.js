@@ -55,23 +55,30 @@ const App = {
     let dirty = false;
     for (const p of this.personalFulls) {
       if (!p.raw) continue;
-      const emailWrong = p.email && !p.email.includes('@');
-      const phoneWrong = p.phone && !/^[\d\s()\-\.+]{7,}$/.test(p.phone);
 
-      if (emailWrong || phoneWrong) {
-        const reparsed = DataParser.parsePersonalFull(p.raw);
-        if (reparsed && !reparsed.error) {
-          const keepEmail = p.email && p.email.includes('@') && !reparsed.email;
-          const keepPhone = p.phone && !reparsed.phone;
-          p.email = keepEmail ? p.email : reparsed.email;
-          p.phone = keepPhone ? p.phone : reparsed.phone;
-          p.extra = reparsed.extra || p.extra;
-          // Update city/zip/state too in case they were wrong
-          p.city = reparsed.city || p.city;
-          p.zip = reparsed.zip || p.zip;
-          p.state = reparsed.state || p.state;
-          dirty = true;
-        }
+      // Always re-parse from raw using the smart parser to fix any stale positional data
+      const reparsed = DataParser.parsePersonalFull(p.raw);
+      if (!reparsed || reparsed.error) continue;
+
+      // Detect if stored data differs from what smart parser produces (any key field wrong)
+      const nameWrong    = p.firstName !== reparsed.firstName || p.lastName !== reparsed.lastName;
+      const addressWrong = p.address   !== reparsed.address;
+      const emailWrong   = p.email     && !p.email.includes('@');
+      const phoneWrong   = p.phone     && !/^[\d\s()\-\.+]{7,}$/.test(p.phone);
+
+      if (nameWrong || addressWrong || emailWrong || phoneWrong) {
+        const keepEmail = p.email && p.email.includes('@') && !reparsed.email;
+        const keepPhone = p.phone && /^[\d\s()\-\.+]{7,}$/.test(p.phone) && !reparsed.phone;
+        p.firstName = reparsed.firstName;
+        p.lastName  = reparsed.lastName;
+        p.address   = reparsed.address;
+        p.city      = reparsed.city   || p.city;
+        p.zip       = reparsed.zip    || p.zip;
+        p.state     = reparsed.state  || p.state;
+        p.email     = keepEmail ? p.email : reparsed.email;
+        p.phone     = keepPhone ? p.phone : reparsed.phone;
+        p.extra     = reparsed.extra  || p.extra;
+        dirty = true;
       }
     }
     if (dirty) {
@@ -86,24 +93,28 @@ const App = {
       const p = rf.personal;
       if (!p || !p.raw) continue;
 
-      // Fix: email field contains no '@' (was likely a phone number put there by old parser)
-      const emailWrong = p.email && !p.email.includes('@');
-      // Fix: phone field looks like a pure 7-digit extra number (8885336), not a real phone
-      const phoneWrong = p.phone && !/^[\d\s()\-\.+]{7,}$/.test(p.phone);
+      // Always re-parse from raw using the smart parser to fix any stale positional data
+      const reparsed = DataParser.parsePersonalFull(p.raw);
+      if (!reparsed || reparsed.error) continue;
 
-      if (emailWrong || phoneWrong) {
-        const reparsed = DataParser.parsePersonalFull(p.raw);
-        if (reparsed && !reparsed.error) {
-          const keepEmail = p.email && p.email.includes('@') && !reparsed.email;
-          const keepPhone = p.phone && !reparsed.phone;
-          p.email = keepEmail ? p.email : reparsed.email;
-          p.phone = keepPhone ? p.phone : reparsed.phone;
-          p.extra = reparsed.extra || p.extra;
-          p.city = reparsed.city || p.city;
-          p.zip = reparsed.zip || p.zip;
-          p.state = reparsed.state || p.state;
-          dirty = true;
-        }
+      const nameWrong    = p.firstName !== reparsed.firstName || p.lastName !== reparsed.lastName;
+      const addressWrong = p.address   !== reparsed.address;
+      const emailWrong   = p.email     && !p.email.includes('@');
+      const phoneWrong   = p.phone     && !/^[\d\s()\-\.+]{7,}$/.test(p.phone);
+
+      if (nameWrong || addressWrong || emailWrong || phoneWrong) {
+        const keepEmail = p.email && p.email.includes('@') && !reparsed.email;
+        const keepPhone = p.phone && /^[\d\s()\-\.+]{7,}$/.test(p.phone) && !reparsed.phone;
+        p.firstName = reparsed.firstName;
+        p.lastName  = reparsed.lastName;
+        p.address   = reparsed.address;
+        p.city      = reparsed.city   || p.city;
+        p.zip       = reparsed.zip    || p.zip;
+        p.state     = reparsed.state  || p.state;
+        p.email     = keepEmail ? p.email : reparsed.email;
+        p.phone     = keepPhone ? p.phone : reparsed.phone;
+        p.extra     = reparsed.extra  || p.extra;
+        dirty = true;
       }
     }
     if (dirty) {
