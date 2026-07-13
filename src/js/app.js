@@ -1134,12 +1134,19 @@ const App = {
         let emailInput = card.querySelector(`[id="${emailInputId}"]`);
 
         const fillEmail = (inputEl) => {
-          // For secondaries 2+, use reversed name (lastName+firstName)
-          const isReversed = (full.secondaryIndex >= 2);
-          const baseEmail = this._generateEmail(
-            full.personal.firstName, full.personal.lastName, isReversed
-          );
-          const [baseLogin, domain] = baseEmail.split('@');
+          // If card has a business, generate email from company name
+          // Otherwise use personal name (with reversed logic for secondary 2+)
+          let baseLogin, domain;
+          if (full.business) {
+            const bizEmail = this._generateEmailFromBusiness(full.business.companyName);
+            [baseLogin, domain] = bizEmail.split('@');
+          } else {
+            const isReversed = (full.secondaryIndex >= 2);
+            const baseEmail  = this._generateEmail(
+              full.personal.firstName, full.personal.lastName, isReversed
+            );
+            [baseLogin, domain] = baseEmail.split('@');
+          }
 
           // Collect all logins already used by sibling secondaries and parent
           const siblingLogins = new Set();
@@ -1484,6 +1491,21 @@ const App = {
   },
 
   /* ── Helpers ───────────────────────────────────────────── */
+
+  /**
+   * Generates email login from a business company name.
+   * Removes common legal suffixes (LLC, INC, CORP, etc), joins words lowercase.
+   * Adds 'llc' back only if the result is shorter than 6 characters.
+   * Example: "CARBON WAVE MEDIA LLC" → "carbonwavemedia@hotmail.com"
+   * Example: "AB LLC" → "abllc@hotmail.com"
+   */
+  _generateEmailFromBusiness(companyName) {
+    const suffixes = /\b(LLC|INC|CORP|LTD|CO\.?|COMPANY|GROUP|HOLDINGS|ENTERPRISES|SERVICES|SOLUTIONS|ASSOCIATES|PARTNERS)\b\.?/gi;
+    const cleaned  = companyName.replace(suffixes, '').trim();
+    let login = cleaned.toLowerCase().replace(/[^a-z]/g, '');
+    if (login.length < 6) login += 'llc';
+    return `${login}@hotmail.com`;
+  },
 
   /**
    * Generates email like julianabarcenas@hotmail.com
