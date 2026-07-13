@@ -1487,7 +1487,8 @@ const App = {
     if (b) {
       lines.push(`${b.companyName}  `);
       lines.push(`${b.ein}  `);
-      const d = b.date.includes('.') ? b.date.split('.').reverse().join('/') : b.date;
+      const [yr, mo, dy] = b.date.split('.');
+      const d = b.date.includes('.') ? `${mo}/${dy}/${yr}` : b.date;
       lines.push(d);
       if (b.extraLines && b.extraLines.length) {
         lines.push(...b.extraLines);
@@ -1527,7 +1528,8 @@ const App = {
     if (b) {
       lines.push(`${b.companyName}`);
       lines.push(`${b.ein}`);
-      const d = b.date.includes('.') ? b.date.split('.').reverse().join('/') : b.date;
+      const [yr, mo, dy] = b.date.split('.');
+      const d = b.date.includes('.') ? `${mo}/${dy}/${yr}` : b.date;
       lines.push(d);
       if (b.extraLines && b.extraLines.length) {
         lines.push(...b.extraLines);
