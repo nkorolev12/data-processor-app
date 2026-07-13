@@ -1484,17 +1484,28 @@ const App = {
     lines.push(phone ? `${phone},` : '');
     lines.push('');
 
-    if (b) lines.push(b.raw.replace(/,/g, ''));
+    if (b) {
+      lines.push(`${b.companyName}  `);
+      lines.push(`${b.ein}  `);
+      const d = b.date.includes('.') ? b.date.split('.').reverse().join('/') : b.date;
+      lines.push(d);
+      if (b.extraLines && b.extraLines.length) {
+        lines.push(...b.extraLines);
+      }
+      lines.push('');
+    }
 
     if (full.manualEmail) {
-      lines.push(full.manualEmailPassword
-        ? `${full.manualEmail}:${full.manualEmailPassword}`
-        : full.manualEmail);
+      lines.push(full.manualEmail);
+      if (full.manualEmailPassword) {
+        lines.push(full.manualEmailPassword);
+      }
+      lines.push('');
     }
 
     if (full.pendingCode) lines.push(`Reference number:${full.pendingCode}`);
 
-    return lines.join('\n');
+    return lines.join('\n').trim();
   },
 
   /* ── Format for Telegram (Done) ──────────────────────── */
@@ -1513,7 +1524,16 @@ const App = {
     lines.push(phone);
     lines.push('');
 
-    if (b) lines.push(b.raw.replace(/,/g, ''));
+    if (b) {
+      lines.push(`${b.companyName}`);
+      lines.push(`${b.ein}`);
+      const d = b.date.includes('.') ? b.date.split('.').reverse().join('/') : b.date;
+      lines.push(d);
+      if (b.extraLines && b.extraLines.length) {
+        lines.push(...b.extraLines);
+      }
+      lines.push('');
+    }
 
     if (full.manualEmail) {
       lines.push(full.manualEmailPassword
@@ -1527,7 +1547,7 @@ const App = {
       lines.push(`Вторяк ${full.secondaryIndex}`);
     }
 
-    return lines.join('\n');
+    return lines.join('\n').trim();
   },
 
   /* ── Set Status ────────────────────────────────────── */
