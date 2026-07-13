@@ -1693,12 +1693,19 @@ const App = {
 
     // 3. Collect name tokens, checking last for type suffix
     const rest = tokens.slice(i);
-    // Check last 1-2 tokens for street type
+    let postDirection = '';
+    
     for (let j = rest.length - 1; j >= 0; j--) {
       const t = rest[j].replace(/\.$/, '').toLowerCase();
       if (TYPES[t]) {
         suffix = TYPES[t];
         streetNameParts = rest.slice(0, j);
+        const leftovers = rest.slice(j + 1);
+        if (leftovers.length > 0) {
+          postDirection = leftovers.map(l => 
+            /^(nw|ne|sw|se|n|s|e|w)\.?$/i.test(l) ? l.toUpperCase() : l
+          ).join(' ');
+        }
         break;
       }
       if (j === 0) streetNameParts = rest; // no type found
@@ -1712,7 +1719,8 @@ const App = {
       houseNum,
       direction,
       ...streetNameParts,
-      suffix
+      suffix,
+      postDirection
     ].filter(Boolean).join(' ');
 
     if (streetLine) {
