@@ -553,6 +553,44 @@ const App = {
     DataUtils.showToast('Почта сохранена ✅');
   },
 
+  /* ── Save Biz Details ────────────────────────────────── */
+
+  async saveBizDetails(fullId, rawText) {
+    const full = this.readyFulls.find(f => f.id === fullId);
+    if (!full || !rawText.trim()) return;
+
+    const rawLines = rawText.trim().split('\n').map(l => l.trim()).filter(Boolean);
+
+    // Extract date: look for a line matching YYYY.MM.DD or YYYY-MM-DD or MM/DD/YYYY
+    let dateStr = '';
+    const dateRe = /^\d{4}[.\-]\d{2}[.\-]\d{2}$|^\d{2}\/\d{2}\/\d{4}$/;
+    const infoLines = [];
+    for (const l of rawLines) {
+      if (!dateStr && dateRe.test(l)) {
+        // Normalize YYYY.MM.DD → MM/DD/YYYY for display
+        if (/^\d{4}[.\-]\d{2}[.\-]\d{2}$/.test(l)) {
+          const [y, m, d] = l.split(/[.\-]/);
+          dateStr = `${m}/${d}/${y}`;
+        } else {
+          dateStr = l;
+        }
+      } else if (l && !/^\d{2}-\d{7}$/.test(l)) {
+        // Skip EIN-like lines, keep text lines as info
+        infoLines.push(l);
+      }
+    }
+    // Remove company name from infoLines (likely the first line if it matches biz name)
+    const companyName = full.business ? full.business.companyName.trim() : '';
+    const filteredInfo = infoLines.filter(l =>
+      !l.toUpperCase().includes(companyName.toUpperCase().split(' ')[0])
+    );
+
+    full.bizDetails = { raw: rawText.trim(), date: dateStr, lines: filteredInfo };
+    await DataStorage.saveReadyFulls(this.readyFulls);
+    this._updateCard(fullId);
+    DataUtils.showToast('Допбиз инфо сохранено ✅');
+  },
+
   /* ── Save Phone ────────────────────────────────────────── */
 
   async savePhone(fullId, phoneVal) {
@@ -709,12 +747,37 @@ const App = {
          <button class="btn-edit-phone" title="Редактировать телефон" data-full-id="${full.id}">✏️</button>`;
 
     // Business section HTML
+    const bizDetails     = full.bizDetails || { raw: '', date: '', lines: [] };
+    const bizDateOverride = bizDetails.date || '';
+    const bizInfoLines   = bizDetails.lines || [];
+    const safeIdBiz      = String(full.id).replace(/\./g, '_');
+    const bizTextareaId  = `biz-details-${safeIdBiz}`;
+
+    const businessDetailsHTML = b
+      ? (() => {
+          if (bizDetails.raw) {
+            return `<div class="card-data-section biz-details-section">
+              <div class="section-label">📝 Допбиз инфо</div>
+              ${bizInfoLines.map(l => `<div class="data-line">🏷️ ${this._esc(l)}</div>`).join('')}
+              <button class="btn-biz-details-edit" data-full-id="${full.id}">✏️ Изменить</button>
+            </div>`;
+          } else {
+            return `<div class="card-data-section biz-details-section">
+              <div class="section-label">📝 Допбиз инфо <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;">(необязательно)</span></div>
+              <textarea id="${bizTextareaId}" class="data-input biz-details-textarea" rows="5"
+                placeholder="NAMMAAUTO LLC&#10;93-3618886&#10;2022.11.28&#10;Retail - Automotive Dealers&#10;Used car sales"></textarea>
+              <button class="btn-biz-details-save" data-full-id="${full.id}">Сохранить</button>
+            </div>`;
+          }
+        })()
+      : '';
+
     const businessHTML = b
       ? `<div class="card-data-section business-section">
            <div class="section-label">🏢 Бизнес</div>
            <div class="data-line"><span class="data-icon">🏢</span> ${this._esc(b.companyName.replace(/,/g, ''))}</div>
            <div class="data-line"><span class="data-icon">🔢</span> ${this._esc(b.ein)}</div>
-           <div class="data-line"><span class="data-icon">📅</span> <span class="date-formatted">${this._formatDate(b.date)}</span></div>
+           <div class="data-line"><span class="data-icon">📅</span> <span class="date-formatted">${this._formatDate(bizDateOverride || b.date)}</span></div>
          </div>`
       : `<div class="card-data-section business-empty">
            <button class="btn-attach-business" data-full-id="${full.id}">
@@ -904,6 +967,7 @@ const App = {
         </div>
 
         ${businessHTML}
+        ${businessDetailsHTML}
         ${emailSectionHTML}
         ${referenceHTML}
         ${secondaryBlockHTML}
@@ -949,6 +1013,26 @@ const App = {
         </div>
       </div>
     `;
+
+    // ── Business details save button
+    const bizSaveBtn = card.querySelector('.btn-biz-details-save');
+    if (bizSaveBtn) {
+      bizSaveBtn.addEventListener('click', () => {
+        const textarea = card.querySelector(`#${bizTextareaId}`);
+        if (!textarea) return;
+        this.saveBizDetails(full.id, textarea.value);
+      });
+    }
+
+    // ── Business details edit button
+    const bizEditBtn = card.querySelector('.btn-biz-details-edit');
+    if (bizEditBtn) {
+      bizEditBtn.addEventListener('click', () => {
+        const f = this.readyFulls.find(x => x.id === full.id);
+        if (f) { f.bizDetails = { raw: '', date: '', lines: [] }; }
+        DataStorage.saveReadyFulls(this.readyFulls).then(() => this._updateCard(full.id));
+      });
+    }
 
     // ── Attach business button
     const attachBtn = card.querySelector('.btn-attach-business');

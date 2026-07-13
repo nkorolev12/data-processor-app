@@ -131,27 +131,56 @@ const DataParser = {
       };
     }
 
-    // ── Format B: 12 fields (State2, no bank). Email at index 10.
+    // ── Format B: 12 fields. Two sub-variants:
+    //   B1 (with middle name): DOB,SSN,First,Middle,Last,Addr,City,ZIP,State,State2,Email,Phone
+    //                          email at index 10
+    //   B2 (no middle name):   DOB,SSN,First,Last,Addr,City,ZIP,State,State2,Email,Phone,Extra
+    //                          email at index 9
     if (len === 12) {
       if (!isValidSSN(parts[1])) return { error: 'Неверный формат SSN (формат 12 полей)' };
-      const firstName = this._toTitleCase(parts[2]);
-      const lastName  = this._toTitleCase(parts[4]);
-      if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
-      return {
-        raw:       line.trim(),
-        dob:       parts[0],
-        ssn:       parts[1],
-        firstName,
-        lastName,
-        address:   parts[5],
-        city:      parts[6],
-        zip:       parts[7],
-        state:     parts[8].toUpperCase(),
-        email:     parts[10],
-        phone:     parts[11],
-        extra:     '',
-        used:      false
-      };
+
+      // Detect sub-variant by checking where the email (@) is
+      if (parts[9] && parts[9].includes('@')) {
+        // B2: no middle name, email at 9
+        const firstName = this._toTitleCase(parts[2]);
+        const lastName  = this._toTitleCase(parts[3]);
+        if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
+        return {
+          raw:       line.trim(),
+          dob:       parts[0],
+          ssn:       parts[1],
+          firstName,
+          lastName,
+          address:   parts[4],
+          city:      parts[5],
+          zip:       parts[6],
+          state:     parts[7].toUpperCase(),
+          email:     parts[9],
+          phone:     parts[10],
+          extra:     parts[11] || '',
+          used:      false
+        };
+      } else {
+        // B1: has middle name (or no email), email at 10
+        const firstName = this._toTitleCase(parts[2]);
+        const lastName  = this._toTitleCase(parts[4]);
+        if (!firstName || !lastName) return { error: 'Отсутствует имя или фамилия' };
+        return {
+          raw:       line.trim(),
+          dob:       parts[0],
+          ssn:       parts[1],
+          firstName,
+          lastName,
+          address:   parts[5],
+          city:      parts[6],
+          zip:       parts[7],
+          state:     parts[8].toUpperCase(),
+          email:     parts[10],
+          phone:     parts[11],
+          extra:     '',
+          used:      false
+        };
+      }
     }
 
     // ── Format C: 11 fields. Email at index 9, Phone at 10.
