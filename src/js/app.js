@@ -5,9 +5,10 @@ const App = {
   businessFulls: [],
   readyFulls: [],
 
-  // Track which cards are in inline-edit mode (email / phone)
+  // Track which cards are in inline-edit mode (email / phone / business)
   _emailEditIds: new Set(),
   _phoneEditIds: new Set(),
+  _bizEditIds: new Set(),
 
   /* ── Init ──────────────────────────────────────────────── */
 
@@ -430,6 +431,7 @@ const App = {
 
     this._emailEditIds.delete(fullId);
     this._phoneEditIds.delete(fullId);
+    this._bizEditIds.delete(fullId);
 
     this.readyFulls.splice(idx, 1);
 
@@ -627,39 +629,66 @@ const App = {
 
   async saveBizDetails(fullId, rawText) {
     const full = this.readyFulls.find(f => f.id === fullId);
-    if (!full || !rawText.trim()) return;
+    if (!full || !full.business) {
+      this._bizEditIds.delete(fullId);
+      this._updateCard(fullId);
+      return;
+    }
+
+    if (!rawText.trim()) {
+      this._bizEditIds.delete(fullId);
+      this._updateCard(fullId);
+      return;
+    }
 
     const rawLines = rawText.trim().split('\n').map(l => l.trim()).filter(Boolean);
 
-    // Extract date: look for a line matching YYYY.MM.DD or YYYY-MM-DD or MM/DD/YYYY
+    let companyName = '';
+    let ein = '';
     let dateStr = '';
     const dateRe = /^\d{4}[.\-]\d{2}[.\-]\d{2}$|^\d{2}\/\d{2}\/\d{4}$/;
-    const infoLines = [];
+    const extraLines = [];
+
     for (const l of rawLines) {
+      // Check if EIN
+      if (!ein && /^\d{2}-\d{7}$/.test(l)) {
+        ein = l;
+        continue;
+      }
+      // Check if Date
       if (!dateStr && dateRe.test(l)) {
-        // Normalize YYYY.MM.DD → MM/DD/YYYY for display
         if (/^\d{4}[.\-]\d{2}[.\-]\d{2}$/.test(l)) {
           const [y, m, d] = l.split(/[.\-]/);
           dateStr = `${m}/${d}/${y}`;
         } else {
           dateStr = l;
         }
-      } else if (l && !/^\d{2}-\d{7}$/.test(l)) {
-        // Skip EIN-like lines, keep text lines as info
-        infoLines.push(l);
+        continue;
       }
+      // First non-EIN, non-Date line is treated as Company Name if we don't have one
+      if (!companyName) {
+        companyName = l;
+        continue;
+      }
+      // Rest are extra lines
+      extraLines.push(l);
     }
-    // Remove company name from infoLines (likely the first line if it matches biz name)
-    const companyName = full.business ? full.business.companyName.trim() : '';
-    const filteredInfo = infoLines.filter(l =>
-      !l.toUpperCase().includes(companyName.toUpperCase().split(' ')[0])
-    );
 
-    full.bizDetails = { raw: rawText.trim(), date: dateStr, lines: filteredInfo };
+    // Update the business full with new parsed values, fallback to old if not found
+    full.business.companyName = companyName || full.business.companyName;
+    full.business.ein = ein || full.business.ein;
+    full.business.date = dateStr || full.business.date;
+    full.business.extraLines = extraLines;
+
+    // Optional: save to raw text so we can pre-fill textarea later
+    full.business.rawOverride = rawText.trim();
+
+    this._bizEditIds.delete(fullId);
     await DataStorage.saveReadyFulls(this.readyFulls);
     this._updateCard(fullId);
-    DataUtils.showToast('Допбиз инфо сохранено ✅');
+    DataUtils.showToast('Бизнес инфо обновлено ✅');
   },
+
 
   /* ── Save Phone ────────────────────────────────────────── */
 
@@ -817,38 +846,37 @@ const App = {
          <button class="btn-edit-phone" title="Редактировать телефон" data-full-id="${full.id}">✏️</button>`;
 
     // Business section HTML
-    const bizDetails     = full.bizDetails || { raw: '', date: '', lines: [] };
-    const bizDateOverride = bizDetails.date || '';
-    const bizInfoLines   = bizDetails.lines || [];
-    const safeIdBiz      = String(full.id).replace(/\./g, '_');
-    const bizTextareaId  = `biz-details-${safeIdBiz}`;
+    const isEditingBiz = this._bizEditIds.has(full.id);
+    const safeIdBiz    = String(full.id).replace(/\./g, '_');
+    const bizTextareaId = `biz-details-${safeIdBiz}`;
 
-    const businessDetailsHTML = b
+    const businessHTML = b
       ? (() => {
-          if (bizDetails.raw) {
-            return `<div class="card-data-section biz-details-section">
-              <div class="section-label">📝 Допбиз инфо</div>
-              ${bizInfoLines.map(l => `<div class="data-line">🏷️ ${this._esc(l)}</div>`).join('')}
-              <button class="btn-biz-details-edit" data-full-id="${full.id}">✏️ Изменить</button>
+          if (isEditingBiz) {
+            const prefill = b.rawOverride || `${b.companyName}\n${b.ein}\n${b.date}`;
+            return `<div class="card-data-section business-section">
+              <div class="section-label">🏢 Изменение бизнеса</div>
+              <textarea id="${bizTextareaId}" class="data-input biz-details-textarea" rows="5"
+                placeholder="NAMMAAUTO LLC&#10;93-3618886&#10;2022.11.28&#10;Retail - Automotive Dealers&#10;Used car sales">${this._esc(prefill)}</textarea>
+              <div class="email-btn-row" style="margin-top:6px;">
+                <button class="btn-biz-details-save" data-full-id="${full.id}">Сохранить</button>
+                <button class="btn-cancel-biz" data-full-id="${full.id}" style="padding:6px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);cursor:pointer;">Отмена</button>
+              </div>
             </div>`;
           } else {
-            return `<div class="card-data-section biz-details-section">
-              <div class="section-label">📝 Допбиз инфо <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;">(необязательно)</span></div>
-              <textarea id="${bizTextareaId}" class="data-input biz-details-textarea" rows="5"
-                placeholder="NAMMAAUTO LLC&#10;93-3618886&#10;2022.11.28&#10;Retail - Automotive Dealers&#10;Used car sales"></textarea>
-              <button class="btn-biz-details-save" data-full-id="${full.id}">Сохранить</button>
+            const extraLinesHTML = (b.extraLines || []).map(l => `<div class="data-line"><span class="data-icon">🏷️</span> ${this._esc(l)}</div>`).join('');
+            return `<div class="card-data-section business-section">
+              <div class="section-label">
+                🏢 Бизнес
+                <button class="btn-biz-details-edit" data-full-id="${full.id}" style="margin-left:auto;background:none;border:none;color:var(--accent);font-size:0.8rem;cursor:pointer;">✏️ Изменить</button>
+              </div>
+              <div class="data-line"><span class="data-icon">🏢</span> ${this._esc(b.companyName.replace(/,/g, ''))}</div>
+              <div class="data-line"><span class="data-icon">🔢</span> ${this._esc(b.ein)}</div>
+              <div class="data-line"><span class="data-icon">📅</span> <span class="date-formatted">${this._formatDate(b.date)}</span></div>
+              ${extraLinesHTML}
             </div>`;
           }
         })()
-      : '';
-
-    const businessHTML = b
-      ? `<div class="card-data-section business-section">
-           <div class="section-label">🏢 Бизнес</div>
-           <div class="data-line"><span class="data-icon">🏢</span> ${this._esc(b.companyName.replace(/,/g, ''))}</div>
-           <div class="data-line"><span class="data-icon">🔢</span> ${this._esc(b.ein)}</div>
-           <div class="data-line"><span class="data-icon">📅</span> <span class="date-formatted">${this._formatDate(bizDateOverride || b.date)}</span></div>
-         </div>`
       : `<div class="card-data-section business-empty">
            <button class="btn-attach-business" data-full-id="${full.id}">
              <span>🏢</span> Прикрепить бизнес фулку
@@ -1037,7 +1065,6 @@ const App = {
         </div>
 
         ${businessHTML}
-        ${businessDetailsHTML}
         ${emailSectionHTML}
         ${referenceHTML}
         ${secondaryBlockHTML}
@@ -1094,13 +1121,21 @@ const App = {
       });
     }
 
+    // ── Business details cancel button
+    const bizCancelBtn = card.querySelector('.btn-cancel-biz');
+    if (bizCancelBtn) {
+      bizCancelBtn.addEventListener('click', () => {
+        this._bizEditIds.delete(full.id);
+        this._updateCard(full.id);
+      });
+    }
+
     // ── Business details edit button
     const bizEditBtn = card.querySelector('.btn-biz-details-edit');
     if (bizEditBtn) {
       bizEditBtn.addEventListener('click', () => {
-        const f = this.readyFulls.find(x => x.id === full.id);
-        if (f) { f.bizDetails = { raw: '', date: '', lines: [] }; }
-        DataStorage.saveReadyFulls(this.readyFulls).then(() => this._updateCard(full.id));
+        this._bizEditIds.add(full.id);
+        this._updateCard(full.id);
       });
     }
 
