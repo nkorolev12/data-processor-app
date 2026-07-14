@@ -25,6 +25,21 @@ const ProxyGenerator = {
     return s;
   },
 
+  /** Map state code to snake_case region used by proxy-man */
+  REGION_MAP: {
+    'AK': 'alaska', 'AL': 'alabama', 'AR': 'arkansas', 'AZ': 'arizona', 'CA': 'california',
+    'CO': 'colorado', 'CT': 'connecticut', 'DC': 'washington_dc', 'DE': 'delaware', 'FL': 'florida',
+    'GA': 'georgia', 'HI': 'hawaii', 'ID': 'idaho', 'IL': 'illinois', 'IN': 'indiana',
+    'IA': 'iowa', 'KS': 'kansas', 'KY': 'kentucky', 'LA': 'louisiana', 'MA': 'massachusetts',
+    'MD': 'maryland', 'ME': 'maine', 'MI': 'michigan', 'MN': 'minnesota', 'MO': 'missouri',
+    'MS': 'mississippi', 'MT': 'montana', 'NC': 'north_carolina', 'ND': 'north_dakota',
+    'NE': 'nebraska', 'NH': 'new_hampshire', 'NJ': 'new_jersey', 'NM': 'new_mexico',
+    'NV': 'nevada', 'NY': 'new_york', 'OH': 'ohio', 'OK': 'oklahoma', 'OR': 'oregon',
+    'PA': 'pennsylvania', 'RI': 'rhode_island', 'SC': 'south_carolina', 'SD': 'south_dakota',
+    'TN': 'tennessee', 'TX': 'texas', 'UT': 'utah', 'VA': 'virginia', 'VT': 'vermont',
+    'WA': 'washington', 'WI': 'wisconsin', 'WV': 'west_virginia', 'WY': 'wyoming'
+  },
+
   /**
    * EmailProxy — для создания почты (geo.g-w.info)
    * Format: socks5://user-nSnoq6CCVLgaxmpG-type-residential-session-{SESSION}-country-US-state-{state}-rotation-20-udp-1:2ssv7poW4xbYIfqo@geo.g-w.info:10800
@@ -36,13 +51,13 @@ const ProxyGenerator = {
   },
 
   /**
-   * FlashProxy — для регистрации BOA (не трогаем)
-   * Format: adam.flashproxy.io:1080:yezrwnhnxwfk-country-US-state-{state}-speed-fast-pool-unlocked-session-{token}-time-long:mihe6hpqdspy
+   * FlashProxy — для регистрации BOA
+   * Format: g0.proxy-man.com:1080:PMrAn6uKGriIZbR-country-us-region-{region}-sid-{sid}-ttl-30m-filter-medium:5GcHkQsORKL5s
    */
   generateFlashProxy(stateCode) {
-    const state = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
-    const token = DataUtils.generateToken(8, 8);
-    return `adam.flashproxy.io:1080:yezrwnhnxwfk-country-US-state-${state}-speed-fast-pool-unlocked-session-${token}-time-long:mihe6hpqdspy`;
+    const region = this.REGION_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
+    const sid = this._randomSession(10);
+    return `g0.proxy-man.com:1080:PMrAn6uKGriIZbR-country-us-region-${region}-sid-${sid}-ttl-30m-filter-medium:5GcHkQsORKL5s`;
   },
 
   /** @deprecated Legacy alias kept for old card data compatibility */
