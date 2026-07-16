@@ -360,7 +360,9 @@
   color: var(--text-muted);
 }
 
-.btn-save-email {
+.btn-save-email,
+.btn-biz-details-save,
+.btn-personal-save {
   flex-shrink: 0;
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.05);
@@ -373,13 +375,17 @@
   cursor: pointer;
   transition: all var(--transition);
 }
-.btn-save-email:hover {
+.btn-save-email:hover,
+.btn-biz-details-save:hover,
+.btn-personal-save:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--accent);
   color: var(--accent-light);
   transform: translateY(-1px);
 }
-.btn-save-email:active {
+.btn-save-email:active,
+.btn-biz-details-save:active,
+.btn-personal-save:active {
   transform: scale(0.97);
 }
 
@@ -1277,6 +1283,8 @@
   .email-btn-row { flex-direction: column; gap: 6px; }
   .btn-generate-email,
   .btn-save-email,
+  .btn-biz-details-save,
+  .btn-personal-save,
   .btn-cancel-email { width: 100%; }
 
   /* Stats collapse to 2-col */
