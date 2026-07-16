@@ -373,18 +373,21 @@ const DataParser = {
     const einMatch = trimmed.match(/\b(\d{2}-\d{7})\b/);
     const dateMatch = trimmed.match(/\b(\d{2}[/.\-]\d{2}[/.\-]\d{4}|\d{4}[/.\-]\d{2}[/.\-]\d{2})\b/);
 
-    if (einMatch && dateMatch) {
-      // Company name is everything before the EIN
-      let companyName = trimmed.substring(0, einMatch.index).trim();
-      
-      // Clean up any trailing commas or hyphens from company name
-      companyName = companyName.replace(/[,;-]+$/, '').trim();
+    if (einMatch) {
+      // Company name and extra info is everything before the EIN
+      let beforeEin = trimmed.substring(0, einMatch.index).trim();
+      beforeEin = beforeEin.replace(/[,;-]+$/, '').trim();
+
+      const parts = beforeEin.split(/\s{2,}/);
+      const companyName = parts[0] || '';
+      const extraLines = parts.slice(1);
 
       return {
         raw:         trimmed,
         companyName: companyName,
         ein:         einMatch[1],
-        date:        dateMatch[1],
+        date:        dateMatch ? dateMatch[1] : '',
+        extraLines:  extraLines,
         used:        false
       };
     }
