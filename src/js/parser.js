@@ -103,11 +103,11 @@ const DataParser = {
     const parts = this._parseCSVLine(line);
     const len   = parts.length;
 
-    if (len < 6) return { error: `Слишком мало полей (найдено ${len}, нужно 6+)` };
-
     // ── Smart content-based parse (primary path)
     const smart = this._smartParsePersonal(line);
     if (smart) return smart;
+
+    if (len < 6) return { error: `Слишком мало полей (найдено ${len}, нужно 6+)` };
 
     // ── Fallback: positional formats (kept for edge cases)
     const isValidSSN = s => s && (s.includes('-') || s.replace(/\D/g, '').length === 9);
@@ -267,8 +267,8 @@ const DataParser = {
     // State: exactly 2 uppercase letters
     if (/^[A-Z]{2}$/.test(v)) return 'state';
 
-    // Address: starts with a number followed by a space and more text
-    if (/^\d+\s+\S/.test(v) || /^p\.?o\.?\s*box/i.test(v)) return 'address';
+    // Address: starts with a number (can include hyphens/letters) followed by a space and more text
+    if (/^\d+[-\w\.]*\s+\S/.test(v) || /^p\.?o\.?\s*box/i.test(v)) return 'address';
 
     // Pure long digits (routing / account number / extra)
     if (/^\d{6,}$/.test(v)) return 'extra';
@@ -282,7 +282,16 @@ const DataParser = {
    * then assembling the record — regardless of column order.
    */
   _smartParsePersonal(line) {
-    const parts = this._parseCSVLine(line).map(p => p.trim());
+    let parts = this._parseCSVLine(line);
+    
+    // If it's a single string with no commas/tabs/pipes, try space splitting
+    if (parts.length === 1) {
+      let l = line.replace(/\b(\d{4})\s+(\d{2})\s+(\d{2})\b/g, '$1-$2-$3');
+      l = l.replace(/\b(\d{2})\s+(\d{2})\s+(\d{4})\b/g, '$1-$2-$3');
+      parts = l.split(/\s{2,}/);
+    }
+    
+    parts = parts.map(p => p.trim()).filter(Boolean);
     if (parts.length < 6) return null;
 
     // Tag every part with its detected type and original index
@@ -360,9 +369,9 @@ const DataParser = {
     const trimmed = line.trim();
     if (!trimmed) return null;
 
-    // Try finding EIN (XX-XXXXXXX) and Date (MM/DD/YYYY) anywhere in the string
+    // Try finding EIN (XX-XXXXXXX) and Date (MM/DD/YYYY or YYYY.MM.DD) anywhere in the string
     const einMatch = trimmed.match(/\b(\d{2}-\d{7})\b/);
-    const dateMatch = trimmed.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
+    const dateMatch = trimmed.match(/\b(\d{2}[/.\-]\d{2}[/.\-]\d{4}|\d{4}[/.\-]\d{2}[/.\-]\d{2})\b/);
 
     if (einMatch && dateMatch) {
       // Company name is everything before the EIN
