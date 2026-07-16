@@ -5,10 +5,11 @@ const App = {
   businessFulls: [],
   readyFulls: [],
 
-  // Track which cards are in inline-edit mode (email / phone / business)
+  // Track which cards are in inline-edit mode (email / phone / business / personal)
   _emailEditIds: new Set(),
   _phoneEditIds: new Set(),
   _bizEditIds: new Set(),
+  _personalEditIds: new Set(),
 
   /* ── Init ──────────────────────────────────────────────── */
 
@@ -636,6 +637,69 @@ const App = {
     DataUtils.showToast('Почта сохранена ✅');
   },
 
+  /* ── Save Personal Details (inline edit) ──────────────── */
+
+  async savePersonalDetails(fullId, rawText) {
+    const full = this.readyFulls.find(f => f.id === fullId);
+    if (!full) { this._personalEditIds.delete(fullId); return; }
+    if (!rawText.trim()) { this._personalEditIds.delete(fullId); this._updateCard(fullId); return; }
+
+    const p = full.personal;
+    const lines = rawText.trim().split('\n').map(l => l.trim()).filter(Boolean);
+
+    // Patterns
+    const dobRe   = /^\d{4}[-\/.]\d{2}[-\/.]\d{2}$|^\d{2}[-\/.]\d{2}[-\/.]\d{4}$/;
+    const ssnRe   = /^\d{3}-\d{2}-\d{4}$/;
+    const emailRe = /@/;
+    const phoneRe = /^[\(\d].*\d{4}$/;
+    // City, State ZIP  e.g. "Huntsville, AL 35806"
+    const cityLineRe = /^([^,]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i;
+    // Street address (starts with number)
+    const streetRe = /^\d+\s+\S/;
+
+    for (const line of lines) {
+      if (dobRe.test(line))   { p.dob   = line; continue; }
+      if (ssnRe.test(line))   { p.ssn   = line; continue; }
+      if (emailRe.test(line)) { p.email = line.trim(); continue; }
+
+      const cityMatch = line.match(cityLineRe);
+      if (cityMatch) {
+        p.city  = cityMatch[1].trim();
+        p.state = cityMatch[2].toUpperCase();
+        p.zip   = cityMatch[3];
+        continue;
+      }
+
+      // Street address may include apt on same line: "200 Rockledge Pl NW #F"
+      if (streetRe.test(line)) {
+        p.address = line;
+        continue;
+      }
+
+      if (phoneRe.test(line)) { p.phone = line; continue; }
+
+      // Name: two words, only letters
+      const nameParts = line.split(/\s+/);
+      if (nameParts.length === 2 && nameParts.every(w => /^[a-zA-Z'-]+$/.test(w))) {
+        p.firstName = nameParts[0];
+        p.lastName  = nameParts[1];
+      }
+    }
+
+    // Sync back to personalFulls source
+    const src = this.personalFulls.find(x => x.id === p.id);
+    if (src) {
+      Object.assign(src, { dob: p.dob, ssn: p.ssn, firstName: p.firstName, lastName: p.lastName,
+        address: p.address, city: p.city, zip: p.zip, state: p.state, email: p.email, phone: p.phone });
+      await DataStorage.savePersonalFulls(this.personalFulls);
+    }
+
+    this._personalEditIds.delete(fullId);
+    await DataStorage.saveReadyFulls(this.readyFulls);
+    this._updateCard(fullId);
+    DataUtils.showToast('Персональные данные обновлены ✅');
+  },
+
   /* ── Save Biz Details ────────────────────────────────── */
 
   async saveBizDetails(fullId, rawText) {
@@ -1059,21 +1123,49 @@ const App = {
       </div>
       <div class="card-body">
 
-        <div class="card-data-section">
-          <div class="section-label">👤 Персональные данные</div>
-          <div class="data-line dob-line">
-            <span class="data-icon">📅</span>
-            <span class="date-formatted">${this._formatDate(p.dob)}</span>
-          </div>
-          <div class="data-line"><span class="data-icon">🔑</span> ${this._esc(p.ssn)}</div>
-          <div class="data-line"><span class="data-icon">👤</span> ${this._esc(p.firstName)} ${this._esc(p.lastName)}</div>
-          ${this._buildAddressBlock(p)}
-          <div class="data-line"><span class="data-icon">📧</span> ${this._esc(p.email)}</div>
-          <div class="data-line phone-line">
-            <span class="data-icon">📞</span>
-            ${phoneDisplay}
-          </div>
-        </div>
+        ${(() => {
+          const isEditingPersonal = this._personalEditIds.has(full.id);
+          const safeIdP = String(full.id).replace(/\./g, '_');
+          const personalTextareaId = `personal-edit-${safeIdP}`;
+          if (isEditingPersonal) {
+            const prefillP = [
+              p.firstName && p.lastName ? `${p.firstName} ${p.lastName}` : '',
+              p.dob  || '',
+              p.ssn  || '',
+              p.address || '',
+              (p.city && p.state && p.zip) ? `${p.city}, ${p.state} ${p.zip}` : '',
+              p.email || '',
+              p.phone || ''
+            ].filter(Boolean).join('\n');
+            return `<div class="card-data-section">
+              <div class="section-label">👤 Редактирование персональных данных</div>
+              <textarea id="${personalTextareaId}" class="data-input biz-details-textarea" rows="7"
+                placeholder="Robert Wiley&#10;1999-05-05&#10;422-49-4109&#10;512 17th Ave NW&#10;Birmingham, AL 35215&#10;email@example.com&#10;(205) 808-8269">${this._esc(prefillP)}</textarea>
+              <div class="email-btn-row" style="margin-top:6px;">
+                <button class="btn-personal-save" data-full-id="${full.id}">Сохранить</button>
+                <button class="btn-cancel-personal" data-full-id="${full.id}" style="padding:6px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);cursor:pointer;">Отмена</button>
+              </div>
+            </div>`;
+          }
+          return `<div class="card-data-section">
+            <div class="section-label">
+              👤 Персональные данные
+              <button class="btn-personal-edit" data-full-id="${full.id}" style="margin-left:auto;background:none;border:none;color:var(--accent);font-size:0.8rem;cursor:pointer;">✏️ Изменить</button>
+            </div>
+            <div class="data-line dob-line">
+              <span class="data-icon">📅</span>
+              <span class="date-formatted">${this._formatDate(p.dob)}</span>
+            </div>
+            <div class="data-line"><span class="data-icon">🔑</span> ${this._esc(p.ssn)}</div>
+            <div class="data-line"><span class="data-icon">👤</span> ${this._esc(p.firstName)} ${this._esc(p.lastName)}</div>
+            ${this._buildAddressBlock(p)}
+            <div class="data-line"><span class="data-icon">📧</span> ${this._esc(p.email)}</div>
+            <div class="data-line phone-line">
+              <span class="data-icon">📞</span>
+              ${phoneDisplay}
+            </div>
+          </div>`;
+        })()}
 
         ${businessHTML}
         ${emailSectionHTML}
@@ -1121,6 +1213,35 @@ const App = {
         </div>
       </div>
     `;
+
+    // ── Personal edit button
+    const personalEditBtn = card.querySelector('.btn-personal-edit');
+    if (personalEditBtn) {
+      personalEditBtn.addEventListener('click', () => {
+        this._personalEditIds.add(full.id);
+        this._updateCard(full.id);
+      });
+    }
+
+    // ── Personal save button
+    const personalSaveBtn = card.querySelector('.btn-personal-save');
+    if (personalSaveBtn) {
+      personalSaveBtn.addEventListener('click', () => {
+        const safeIdP = String(full.id).replace(/\./g, '_');
+        const textarea = card.querySelector(`#personal-edit-${safeIdP}`);
+        if (!textarea) return;
+        this.savePersonalDetails(full.id, textarea.value);
+      });
+    }
+
+    // ── Personal cancel button
+    const personalCancelBtn = card.querySelector('.btn-cancel-personal');
+    if (personalCancelBtn) {
+      personalCancelBtn.addEventListener('click', () => {
+        this._personalEditIds.delete(full.id);
+        this._updateCard(full.id);
+      });
+    }
 
     // ── Business details save button
     const bizSaveBtn = card.querySelector('.btn-biz-details-save');
