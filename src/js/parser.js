@@ -369,9 +369,9 @@ const DataParser = {
     const trimmed = line.trim();
     if (!trimmed) return null;
 
-    // Try finding EIN (XX-XXXXXXX) and Date (MM/DD/YYYY or YYYY.MM.DD) anywhere in the string
-    const einMatch = trimmed.match(/\b(\d{2}-\d{7})\b/);
-    const dateMatch = trimmed.match(/\b(\d{2}[/.\-]\d{2}[/.\-]\d{4}|\d{4}[/.\-]\d{2}[/.\-]\d{2})\b/);
+    // Try finding EIN (XX-XXXXXXX or APPLIED FOR) and Date (M/D/YYYY or YYYY.MM.DD) anywhere in the string
+    const einMatch = trimmed.match(/(\b\d{2}-\d{7}\b|APPLIED FOR)/i);
+    const dateMatch = trimmed.match(/\b(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4}|\d{4}[/.\-]\d{1,2}[/.\-]\d{1,2})\b/);
 
     if (einMatch) {
       // Company name and extra info is everything before the EIN

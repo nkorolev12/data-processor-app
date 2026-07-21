@@ -52,12 +52,12 @@ const ProxyGenerator = {
 
   /**
    * FlashProxy — для регистрации BOA
-   * Format: g0.proxy-man.com:1080:PMrAn6uKGriIZbR-country-us-region-{region}-sid-{sid}-ttl-30m-filter-medium:5GcHkQsORKL5s
+   * Format: proxy.psbproxy.io:12321:d848096630c24e71811fe26e7257cc:Opad42F6YHGJVmRU_country-us_state-{state}_session-{sid}_lifetime-30m
    */
   generateFlashProxy(stateCode) {
-    const region = this.REGION_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
-    const sid = this._randomSession(10);
-    return `g0.proxy-man.com:1080:PMrAn6uKGriIZbR-country-us-region-${region}-sid-${sid}-ttl-30m-filter-medium:5GcHkQsORKL5s`;
+    const state = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
+    const sid = this._randomSession(8);
+    return `proxy.psbproxy.io:12321:d848096630c24e71811fe26e7257cc:Opad42F6YHGJVmRU_country-us_state-${state}_session-${sid}_lifetime-30m`;
   },
 
   /** @deprecated Legacy alias kept for old card data compatibility */
