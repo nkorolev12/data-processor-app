@@ -939,3 +939,108 @@ body {
   .tab-nav { padding: 2px; }
   .tab-btn { padding: 6px 7px; }
 }
+
+/* ============================================================
+   TRUIST PAGE STYLES
+   ============================================================ */
+
+.truist-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 20px;
+}
+.truist-input-panel {
+  flex: 0 0 340px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 20px;
+}
+.truist-textarea { min-height: 200px; resize: vertical; }
+.truist-cards-container { flex: 1; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.truist-empty { text-align: center; color: var(--text-muted); padding: 60px 20px; font-size: 1rem; }
+
+.truist-stats-panel { display: flex; gap: 10px; }
+.truist-stat-card {
+  flex: 1;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  text-align: center;
+  transition: transform var(--transition);
+}
+.truist-stat-card:hover { transform: translateY(-2px); }
+.truist-stat-icon { font-size: 1.1rem; margin-bottom: 4px; }
+.truist-stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+.truist-stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+.truist-stat-done .truist-stat-value     { color: var(--success); }
+.truist-stat-rejected .truist-stat-value { color: var(--danger); }
+.truist-stat-verif .truist-stat-value    { color: var(--warning); }
+
+.truist-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.truist-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-sm); }
+.truist-card.truist-card-done     { border-color: rgba(16,185,129,0.25); }
+.truist-card.truist-card-rejected { border-color: rgba(239,68,68,0.2); }
+.truist-card.truist-card-verif    { border-color: rgba(245,158,11,0.25); }
+
+.truist-card-header { display: flex; align-items: center; justify-content: space-between; }
+.truist-card-title { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+.truist-badge { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.truist-badge-done     { background: rgba(16,185,129,0.15); color: var(--success); }
+.truist-badge-rejected { background: rgba(239,68,68,0.15);  color: var(--danger); }
+.truist-badge-verif    { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+.truist-proxy-row {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  font-size: 0.72rem; font-family: 'JetBrains Mono','Consolas',monospace;
+}
+.truist-proxy-label { flex-shrink: 0; font-size: 0.85rem; }
+.truist-proxy-value { flex: 1; color: var(--text-secondary); word-break: break-all; }
+.truist-proxy-btn { flex-shrink: 0; background: none; border: none; cursor: pointer; font-size: 0.9rem; opacity: 0.6; transition: opacity var(--transition), transform var(--transition); padding: 2px 4px; }
+.truist-proxy-btn:hover { opacity: 1; transform: scale(1.15); }
+
+.truist-lines-block {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.truist-line { font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: baseline; gap: 6px; line-height: 1.5; }
+.truist-line-emoji { flex-shrink: 0; font-size: 0.85rem; }
+
+.truist-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.truist-btn-status { flex: 1; padding: 8px 12px; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all var(--transition); }
+.truist-btn-s-done     { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.truist-btn-s-done:hover     { background: rgba(16,185,129,0.25); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.2); }
+.truist-btn-s-rejected { background: rgba(239,68,68,0.1);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.3); }
+.truist-btn-s-rejected:hover { background: rgba(239,68,68,0.22);  transform: translateY(-1px); }
+.truist-btn-s-verif    { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.truist-btn-s-verif:hover    { background: rgba(245,158,11,0.22); transform: translateY(-1px); }
+
+.truist-actions-settled { display: flex; gap: 8px; }
+.truist-btn-copy { padding: 8px 16px; background: var(--gradient); color: #fff; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all var(--transition); }
+.truist-btn-copy:hover { background: var(--gradient-hover); transform: translateY(-1px); }
+.truist-btn-reset { padding: 8px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: inherit; font-size: 0.8rem; cursor: pointer; transition: all var(--transition); }
+.truist-btn-reset:hover { color: var(--text-primary); background: rgba(255,255,255,0.09); }
+.truist-btn-delete { background: none; border: none; cursor: pointer; font-size: 1rem; opacity: 0.35; transition: opacity var(--transition), transform var(--transition); padding: 2px 6px; }
+.truist-btn-delete:hover { opacity: 0.75; transform: scale(1.15); }
+
+@media (max-width: 768px) {
+  .truist-layout { flex-direction: column; padding: 12px; }
+  .truist-input-panel { flex: unset; width: 100%; position: static; }
+}

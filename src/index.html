@@ -63,6 +63,9 @@
         <button class="tab-btn" data-tab="dashboard" title="Дашборд">
           <span class="tab-icon">📊</span>
         </button>
+        <button class="tab-btn" data-tab="truist" title="Truist">
+          <span class="tab-icon">🏦</span>
+        </button>
       </nav>
     </header>
 
@@ -118,7 +121,45 @@
       <div id="ready-fulls-container" class="ready-container"></div>
     </main>
 
-    <!-- ── Secondaries Page ─────────────────────────────── -->
+    <!-- ── Truist Page ──────────────────────────────────── -->
+    <main id="page-truist" class="page">
+      <div class="truist-layout">
+        <!-- Input panel -->
+        <div class="truist-input-panel">
+          <div class="column-header">
+            <span class="column-icon">🏦</span>
+            <h3>Truist — Загрузить фулки</h3>
+          </div>
+          <textarea id="truist-input" class="data-input truist-textarea" rows="10"
+            placeholder="Вставьте блоки фулок разделённые ===&#10;&#10;6292181468&#10;Matthew Jennette&#10;...&#10;SSN: 410-71-5108&#10;DOB: 01/23/1992&#10;===&#10;...">
+          </textarea>
+          <button id="btn-add-truist" class="btn-add">+ Добавить</button>
+
+          <!-- Truist Stats -->
+          <div class="truist-stats-panel">
+            <div class="truist-stat-card truist-stat-done">
+              <div class="truist-stat-icon">✅</div>
+              <div class="truist-stat-value" id="truist-kpi-done">0</div>
+              <div class="truist-stat-label">Зарег</div>
+            </div>
+            <div class="truist-stat-card truist-stat-rejected">
+              <div class="truist-stat-icon">❌</div>
+              <div class="truist-stat-value" id="truist-kpi-rejected">0</div>
+              <div class="truist-stat-label">Дек</div>
+            </div>
+            <div class="truist-stat-card truist-stat-verif">
+              <div class="truist-stat-icon">⚠️</div>
+              <div class="truist-stat-value" id="truist-kpi-verif">0</div>
+              <div class="truist-stat-label">Вериф</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards -->
+        <div id="truist-cards-container" class="truist-cards-container"></div>
+      </div>
+    </main>
+
     <main id="page-secondaries" class="page">
       <div id="secondaries-container" class="secondaries-page-container"></div>
     </main>
@@ -307,6 +348,7 @@
   <script src="js/storage.js"></script>
   <script src="js/themes.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/truist.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

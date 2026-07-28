@@ -42,6 +42,7 @@ const App = {
     this.setupSecondaryModal();
 
     await DashboardManager.init();
+    await TruistApp.init();
 
     // One-time migrations: fix existing cards where email/phone were misassigned
     await this._migrateCards();

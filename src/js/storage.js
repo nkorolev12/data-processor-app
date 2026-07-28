@@ -26,5 +26,11 @@ const DataStorage = {
   async saveReadyFulls(data)         { return this.saveData('ready_fulls.json', data); },
 
   async loadStatistics()             { return (await this.loadData('statistics.json')) || {}; },
-  async saveStatistics(data)         { return this.saveData('statistics.json', data); }
+  async saveStatistics(data)         { return this.saveData('statistics.json', data); },
+
+  async loadTruistCards()            { return (await this.loadData('truist_cards.json')) || []; },
+  async saveTruistCards(data)        { return this.saveData('truist_cards.json', data); },
+
+  async loadTruistStats()            { return (await this.loadData('truist_stats.json')) || {}; },
+  async saveTruistStats(data)        { return this.saveData('truist_stats.json', data); }
 };
