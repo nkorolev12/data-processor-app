@@ -1,9 +1,10 @@
-﻿// __ Truist Module (v2) __
+﻿// __ Truist Module (v2.1) __
 
 const TruistApp = {
 
   cards: [],
   stats: {},
+  _editingCards: new Set(),
 
   async init() {
     [this.cards, this.stats] = await Promise.all([
@@ -51,13 +52,17 @@ const TruistApp = {
     }
   },
 
-  /* -- Credential Generation -------------------------------- */
+  /* -- Credential Generation ------------------------------- */
 
   _genLogin(firstName) {
-    const name = (firstName || "user").toLowerCase().replace(/[^a-z]/g, "").slice(0, 6);
-    const digits = String(Math.floor(Math.random() * 900) + 100);
-    const letter = "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)];
-    return name + digits + letter;
+    const name = (firstName || "user").toLowerCase().replace(/[^a-z]/g, "");
+    const nameLen = 4 + Math.floor(Math.random() * 3);
+    const namePart = name.slice(0, nameLen);
+    const numDigits = Math.floor(Math.random() * 5);
+    let digits = "";
+    for (let i = 0; i < numDigits; i++) digits += String(Math.floor(Math.random() * 10));
+    const letter = Math.random() > 0.4 ? "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] : "";
+    return namePart + digits + letter;
   },
 
   _genPass() {
@@ -111,14 +116,28 @@ const TruistApp = {
     await DataStorage.saveTruistCards(this.cards);
   },
 
-  async savePersonalField(cardId, field, value) {
-    const card = this.cards.find(c => c.id === cardId);
-    if (!card || !card.parsed) return;
-    card.parsed[field] = value;
-    await DataStorage.saveTruistCards(this.cards);
+  /* -- Edit Mode ------------------------------------------- */
+
+  toggleEdit(cardId) {
+    if (this._editingCards.has(cardId)) this._editingCards.delete(cardId);
+    else this._editingCards.add(cardId);
+    this._updateCardEl(cardId);
   },
 
-  /* -- Status ----------------------------------------------- */
+  async saveEdit(cardId) {
+    const card = this.cards.find(c => c.id === cardId);
+    const cardEl = document.getElementById("tc_" + cardId);
+    if (card && card.parsed && cardEl) {
+      cardEl.querySelectorAll(".tfield-input").forEach(inp => {
+        card.parsed[inp.dataset.field] = inp.value.trim();
+      });
+    }
+    this._editingCards.delete(cardId);
+    await DataStorage.saveTruistCards(this.cards);
+    this._updateCardEl(cardId);
+  },
+
+  /* -- Status ---------------------------------------------- */
 
   async setStatus(cardId, status) {
     const card = this.cards.find(c => c.id === cardId);
@@ -144,7 +163,7 @@ const TruistApp = {
     if (status === "verif")    s.verif    = Math.max(0, (s.verif || 0) + delta);
   },
 
-  /* -- Proxy ------------------------------------------------ */
+  /* -- Proxy ----------------------------------------------- */
 
   async refreshProxy(cardId) {
     const card = this.cards.find(c => c.id === cardId);
@@ -154,11 +173,12 @@ const TruistApp = {
     this._updateCardEl(cardId);
   },
 
-  /* -- Delete ----------------------------------------------- */
+  /* -- Delete ---------------------------------------------- */
 
   async deleteCard(cardId) {
     const card = this.cards.find(c => c.id === cardId);
     if (card && card.status) this._adjustStat(card.status, -1);
+    this._editingCards.delete(cardId);
     this.cards = this.cards.filter(c => c.id !== cardId);
     await Promise.all([DataStorage.saveTruistCards(this.cards), DataStorage.saveTruistStats(this.stats)]);
     const el = document.getElementById("tc_" + cardId);
@@ -166,22 +186,20 @@ const TruistApp = {
     this.renderStats();
   },
 
-  /* -- Copy all --------------------------------------------- */
+  /* -- Copy All -------------------------------------------- */
 
   copyCard(cardId) {
     const card = this.cards.find(c => c.id === cardId);
     if (!card || !card.parsed) { DataUtils.showToast("Нет данных"); return; }
     const p = card.parsed;
     let dob = p.dob || "";
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) { const parts = dob.split("-"); dob = parts[1] + "/" + parts[2] + "/" + parts[0]; }
-
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+      const parts = dob.split("-");
+      dob = parts[1] + "/" + parts[2] + "/" + parts[0];
+    }
     let text = [p.firstName || "", p.lastName || ""].join(" ").trim()
-      + "|" + (p.address || "")
-      + "|" + (p.city    || "")
-      + "|" + (p.state   || "")
-      + "|" + (p.zip     || "")
-      + "|" + (p.ssn     || "")
-      + "|" + dob;
+      + "|" + (p.address || "") + "|" + (p.city || "") + "|" + (p.state || "")
+      + "|" + (p.zip || "") + "|" + (p.ssn || "") + "|" + dob;
 
     if (card.creds) {
       const c = card.creds;
@@ -192,21 +210,20 @@ const TruistApp = {
       text += "\n\nAN|RN";
       text += "\n" + (c.an || "") + "|" + (c.rn || "");
     }
-
     navigator.clipboard.writeText(text).then(() => DataUtils.showToast("Скопировано"));
   },
 
-  /* -- Stats ------------------------------------------------ */
+  /* -- Stats ----------------------------------------------- */
 
   renderStats() {
     const s = this.stats[DataUtils.getTodayDate()] || { done: 0, rejected: 0, verif: 0 };
-    const byId = function(id) { return document.getElementById(id); };
-    if (byId("truist-kpi-done"))     byId("truist-kpi-done").textContent     = s.done || 0;
-    if (byId("truist-kpi-rejected")) byId("truist-kpi-rejected").textContent = (s.rejected || 0) + (s.verif || 0);
-    if (byId("truist-kpi-verif"))    byId("truist-kpi-verif").textContent    = s.verif || 0;
+    const g = function(id) { return document.getElementById(id); };
+    if (g("truist-kpi-done"))     g("truist-kpi-done").textContent     = s.done || 0;
+    if (g("truist-kpi-rejected")) g("truist-kpi-rejected").textContent = (s.rejected || 0) + (s.verif || 0);
+    if (g("truist-kpi-verif"))    g("truist-kpi-verif").textContent    = s.verif || 0;
   },
 
-  /* -- Render ----------------------------------------------- */
+  /* -- Render ---------------------------------------------- */
 
   renderCards() {
     const container = document.getElementById("truist-cards-container");
@@ -227,13 +244,15 @@ const TruistApp = {
     if (old && card) old.parentNode.replaceChild(this._buildCard(card), old);
   },
 
-  /* -- Build Card ------------------------------------------- */
+  /* -- Build Card ------------------------------------------ */
 
   _buildCard(card) {
     const el = document.createElement("div");
     el.className = "truist-card" + (card.status ? " truist-card-" + card.status : "");
     el.id = "tc_" + card.id;
     el.dataset.id = card.id;
+
+    const isEditing = this._editingCards.has(card.id);
 
     let badgeText = "", badgeClass = "";
     if (card.status === "done")     { badgeClass = "truist-badge-done";     badgeText = "Зарег"; }
@@ -252,29 +271,35 @@ const TruistApp = {
         "</div>";
     } else {
       const copyBtn = card.status === "done"
-        ? "<button class=\"truist-btn-copy\" data-action=\"copy\" data-id=\"" + card.id + "\">Скопировать всё</button>"
+        ? "<button class=\"truist-btn-copy\" data-action=\"copy\" data-id=\"" + card.id + "\">📋 Скопировать всё</button>"
         : "";
       actionsHTML =
         "<div class=\"truist-actions truist-actions-settled\">" +
           copyBtn +
-          "<button class=\"truist-btn-reset\" data-action=\"reset\" data-id=\"" + card.id + "\">Сбросить</button>" +
+          "<button class=\"truist-btn-reset\" data-action=\"reset\" data-id=\"" + card.id + "\">↩️ Сбросить</button>" +
         "</div>";
     }
 
+    const editBtnLabel = isEditing ? "💾 Сохранить" : "✏️";
+    const editAction   = isEditing ? "save-edit" : "toggle-edit";
+
     el.innerHTML =
       "<div class=\"truist-card-header\">" +
-        "<div class=\"truist-card-title\">Truist" +
+        "<div class=\"truist-card-title\">🏦 Truist" +
           (badgeText ? " <span class=\"truist-badge " + badgeClass + "\">" + badgeText + "</span>" : "") +
         "</div>" +
-        "<button class=\"truist-btn-delete\" data-action=\"delete\" data-id=\"" + card.id + "\" title=\"Удалить\">Del</button>" +
+        "<div class=\"truist-card-header-btns\">" +
+          "<button class=\"truist-hdr-btn\" data-action=\"" + editAction + "\" data-id=\"" + card.id + "\" title=\"Редактировать\">" + editBtnLabel + "</button>" +
+          "<button class=\"truist-hdr-btn truist-hdr-del\" data-action=\"delete\" data-id=\"" + card.id + "\" title=\"Удалить\">🗑️</button>" +
+        "</div>" +
       "</div>" +
       "<div class=\"truist-proxy-row\">" +
-        "<span class=\"truist-proxy-label\">Прокси</span>" +
+        "<span class=\"truist-proxy-label\">🌐</span>" +
         "<span class=\"truist-proxy-value\">" + this._esc(card.proxy) + "</span>" +
-        "<button class=\"truist-proxy-btn\" data-action=\"copy-proxy\"    data-id=\"" + card.id + "\">Копировать</button>" +
-        "<button class=\"truist-proxy-btn\" data-action=\"refresh-proxy\" data-id=\"" + card.id + "\">Обновить</button>" +
+        "<button class=\"truist-proxy-btn\" data-action=\"copy-proxy\"    data-id=\"" + card.id + "\" title=\"Скопировать\">📋</button>" +
+        "<button class=\"truist-proxy-btn\" data-action=\"refresh-proxy\" data-id=\"" + card.id + "\" title=\"Обновить\">🔄</button>" +
       "</div>" +
-      this._renderPersonalFields(card) +
+      (isEditing ? this._renderEditForm(card) : this._renderRawLines(card)) +
       credsHTML +
       actionsHTML;
 
@@ -290,24 +315,20 @@ const TruistApp = {
       const id = Number(btn.dataset.id);
 
       if      (action === "done" || action === "rejected" || action === "verif") { await this.setStatus(id, action); }
-      else if (action === "reset")               { await this.setStatus(id, null); }
-      else if (action === "copy")                { this.copyCard(id); }
-      else if (action === "delete")              { await this.deleteCard(id); }
-      else if (action === "refresh-proxy")       { await this.refreshProxy(id); }
+      else if (action === "reset")             { await this.setStatus(id, null); }
+      else if (action === "copy")              { this.copyCard(id); }
+      else if (action === "delete")            { await this.deleteCard(id); }
+      else if (action === "refresh-proxy")     { await this.refreshProxy(id); }
+      else if (action === "toggle-edit")       { this.toggleEdit(id); }
+      else if (action === "save-edit")         { await this.saveEdit(id); }
       else if (action === "copy-proxy") {
         const c = this.cards.find(x => x.id === id);
         if (c) navigator.clipboard.writeText(c.proxy).then(() => DataUtils.showToast("Прокси скопирован"));
       }
-      else if (action === "refresh-api")         { await this.refreshSection(id, "api"); }
-      else if (action === "refresh-log")         { await this.refreshSection(id, "log"); }
-      else if (action === "toggle-api-lock")     { await this.toggleLock(id, "api"); }
-      else if (action === "toggle-log-lock")     { await this.toggleLock(id, "log"); }
-    });
-
-    el.querySelectorAll(".tfield-input").forEach(inp => {
-      inp.addEventListener("change", async () => {
-        await this.savePersonalField(Number(inp.dataset.cid), inp.dataset.field, inp.value.trim());
-      });
+      else if (action === "refresh-api")       { await this.refreshSection(id, "api"); }
+      else if (action === "refresh-log")       { await this.refreshSection(id, "log"); }
+      else if (action === "toggle-api-lock")   { await this.toggleLock(id, "api"); }
+      else if (action === "toggle-log-lock")   { await this.toggleLock(id, "log"); }
     });
 
     el.querySelectorAll(".tcred-input[data-cred]").forEach(inp => {
@@ -315,7 +336,6 @@ const TruistApp = {
         await this.saveCredField(Number(inp.dataset.id), inp.dataset.cred, inp.dataset.field, inp.value.trim());
       });
     });
-
     el.querySelectorAll(".tcred-input[data-anrn]").forEach(inp => {
       inp.addEventListener("change", async () => {
         await this.saveCredField(Number(inp.dataset.id), "anrn", inp.dataset.anrn, inp.value.trim());
@@ -323,26 +343,26 @@ const TruistApp = {
     });
   },
 
-  /* -- Personal Fields -------------------------------------- */
+  /* -- Raw Lines (default view) ---------------------------- */
 
-  _renderPersonalFields(card) {
-    const f = (key, icon, label, val, ph) => {
-      return "<div class=\"tfield\">" +
+  _renderRawLines(card) {
+    const lines = card.raw.split("\n").map(l => l.trim()).filter(Boolean);
+    return "<div class=\"truist-lines-block\">" +
+      lines.map(l => "<div class=\"truist-line\"><span class=\"truist-line-emoji\">" + this._lineEmoji(l) + "</span> " + this._esc(l) + "</div>").join("") +
+      "</div>";
+  },
+
+  /* -- Edit Form (edit mode) ------------------------------- */
+
+  _renderEditForm(card) {
+    const p = card.parsed || {};
+    const f = (key, icon, label, val, ph) =>
+      "<div class=\"tfield\">" +
         "<span class=\"tfield-icon\">" + icon + "</span>" +
         "<span class=\"tfield-label\">" + label + "</span>" +
-        "<input class=\"tfield-input\" data-cid=\"" + card.id + "\" data-field=\"" + key + "\" value=\"" + this._esc(val || "") + "\" placeholder=\"" + ph + "\">" +
+        "<input class=\"tfield-input\" data-field=\"" + key + "\" value=\"" + this._esc(val || "") + "\" placeholder=\"" + ph + "\">" +
       "</div>";
-    };
-
-    if (!card.parsed) {
-      const lines = card.raw.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
-      return "<div class=\"truist-lines-block\">" +
-        lines.map(l => "<div class=\"truist-line\"><span class=\"truist-line-emoji\">" + this._lineEmoji(l) + "</span> " + this._esc(l) + "</div>").join("") +
-        "</div>";
-    }
-
-    const p = card.parsed;
-    return "<div class=\"truist-fields\">" +
+    return "<div class=\"truist-edit-form\">" +
       f("firstName", "👤", "Имя",     p.firstName, "First") +
       f("lastName",  "👤", "Фамилия", p.lastName,  "Last")  +
       f("dob",       "📅", "DOB",     p.dob,       "MM/DD/YYYY") +
@@ -356,7 +376,7 @@ const TruistApp = {
     "</div>";
   },
 
-  /* -- Credential Sections ---------------------------------- */
+  /* -- Credential Sections --------------------------------- */
 
   _renderCreds(card) {
     const c   = card.id;

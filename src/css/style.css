@@ -1182,3 +1182,76 @@ body {
 /* Copy all button polish */
 .truist-btn-copy::before { content: "📋 "; }
 .truist-btn-delete::before { content: "🗑️ "; }
+
+/* -- Truist v2.1 fixes -- */
+
+/* Remove erroneous ::before emoji that duplicated icons */
+.truist-btn-copy::before,
+.truist-btn-delete::before { content: ""; }
+
+/* Card header with two buttons */
+.truist-card-header-btns { display: flex; gap: 4px; align-items: center; }
+.truist-hdr-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 3px 7px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  transition: color var(--transition), background var(--transition);
+}
+.truist-hdr-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.07); }
+.truist-hdr-del:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+/* Proxy row: responsive overflow */
+.truist-proxy-row { flex-wrap: nowrap; min-width: 0; overflow: hidden; }
+.truist-proxy-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* Edit form */
+.truist-edit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.tfield {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.tfield-icon { flex-shrink: 0; font-size: 0.78rem; }
+.tfield-label { flex-shrink: 0; font-size: 0.67rem; color: var(--text-muted); min-width: 48px; text-transform: uppercase; letter-spacing: 0.04em; }
+.tfield-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 3px 7px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.78rem;
+  min-width: 0;
+  transition: border-color var(--transition), background var(--transition);
+}
+.tfield-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(124,58,237,0.08);
+  color: var(--text-primary);
+}
+
+/* Address & email span full width in edit form */
+.truist-edit-form .tfield:has([data-field="address"]),
+.truist-edit-form .tfield:has([data-field="email"]) { grid-column: 1 / -1; }
+
+/* Responsive: proxy and fields should wrap at small widths */
+@media (max-width: 560px) {
+  .truist-proxy-row { flex-wrap: wrap; }
+  .truist-proxy-value { white-space: normal; word-break: break-all; }
+  .truist-edit-form { grid-template-columns: 1fr; }
+}
