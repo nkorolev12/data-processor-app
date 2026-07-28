@@ -129,10 +129,15 @@ const TruistApp = {
   async saveEdit(cardId) {
     const card = this.cards.find(c => c.id === cardId);
     const cardEl = document.getElementById("tc_" + cardId);
-    if (card && card.parsed && cardEl) {
-      cardEl.querySelectorAll(".tfield-input").forEach(inp => {
-        card.parsed[inp.dataset.field] = inp.value.trim();
-      });
+    if (card && cardEl) {
+      const ta = cardEl.querySelector(".truist-edit-textarea");
+      if (ta) {
+        const val = ta.value.trim();
+        if (val) {
+          card.raw = val;
+          card.parsed = DataParser.parseMultilinePersonalBlock(val) || card.parsed;
+        }
+      }
     }
     this._editingCards.delete(cardId);
     await DataStorage.saveTruistCards(this.cards);
@@ -378,25 +383,7 @@ const TruistApp = {
   /* -- Edit Form (edit mode) ------------------------------- */
 
   _renderEditForm(card) {
-    const p = card.parsed || {};
-    const f = (key, icon, label, val, ph) =>
-      "<div class=\"tfield\">" +
-        "<span class=\"tfield-icon\">" + icon + "</span>" +
-        "<span class=\"tfield-label\">" + label + "</span>" +
-        "<input class=\"tfield-input\" data-field=\"" + key + "\" value=\"" + this._esc(val || "") + "\" placeholder=\"" + ph + "\">" +
-      "</div>";
-    return "<div class=\"truist-edit-form\">" +
-      f("firstName", "👤", "Имя",     p.firstName, "First") +
-      f("lastName",  "👤", "Фамилия", p.lastName,  "Last")  +
-      f("dob",       "📅", "DOB",     p.dob,       "MM/DD/YYYY") +
-      f("ssn",       "🔑", "SSN",     p.ssn,       "XXX-XX-XXXX") +
-      f("address",   "🏠", "Адрес",  p.address,   "123 Main St") +
-      f("city",      "🏙️", "Город",  p.city,      "City") +
-      f("state",     "📍", "Штат",   p.state,     "TX") +
-      f("zip",       "📮", "ZIP",    p.zip,        "00000") +
-      f("email",     "📧", "Email",  p.email,     "email@...") +
-      f("phone",     "📞", "Телефон", p.phone,    "0000000000") +
-    "</div>";
+    return "<textarea class=\"truist-edit-textarea\" spellcheck=\"false\">" + this._esc(card.raw) + "</textarea>";
   },
 
   /* -- Credential Sections --------------------------------- */
