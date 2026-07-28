@@ -1044,3 +1044,141 @@ body {
   .truist-layout { flex-direction: column; padding: 12px; }
   .truist-input-panel { flex: unset; width: 100%; position: static; }
 }
+
+/* -- Truist Card v2: Personal Fields -- */
+.truist-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.tfield {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.tfield-icon { flex-shrink: 0; font-size: 0.8rem; }
+.tfield-label {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  min-width: 52px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tfield-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 3px 7px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.78rem;
+  min-width: 0;
+  transition: border-color var(--transition), background var(--transition);
+}
+.tfield-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(124,58,237,0.08);
+  color: var(--text-primary);
+}
+
+/* Wide fields: address, email span full width */
+.tfield:has([data-field="address"]),
+.tfield:has([data-field="email"]) {
+  grid-column: 1 / -1;
+}
+
+/* -- Truist Credential Sections -- */
+.tcred-section {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tcred-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tcred-hdr-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.tcred-ctrls { display: flex; gap: 4px; }
+.tcred-ctrl-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: opacity var(--transition), background var(--transition);
+}
+.tcred-ctrl-btn:hover { opacity: 1; background: rgba(255,255,255,0.07); }
+
+.tcred-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tcred-sep {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+.tcred-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 8px;
+  color: var(--text-secondary);
+  font-family: "JetBrains Mono","Consolas",monospace;
+  font-size: 0.76rem;
+  min-width: 0;
+  transition: border-color var(--transition), background var(--transition);
+}
+.tcred-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(124,58,237,0.08);
+  color: var(--text-primary);
+}
+.tcred-input.tcred-locked {
+  background: rgba(255,255,255,0.02);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+/* -- Fix card header buttons -- */
+.truist-card-header .truist-btn-delete {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.8rem; padding: 3px 8px;
+  color: var(--text-muted);
+  border-radius: 4px;
+  transition: color var(--transition), background var(--transition);
+}
+.truist-card-header .truist-btn-delete:hover {
+  color: var(--danger);
+  background: rgba(239,68,68,0.1);
+}
+
+/* Copy all button polish */
+.truist-btn-copy::before { content: "📋 "; }
+.truist-btn-delete::before { content: "🗑️ "; }
