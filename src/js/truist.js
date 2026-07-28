@@ -83,11 +83,11 @@ const TruistApp = {
     const fn = card.parsed ? (card.parsed.firstName || "") : "";
     const phone = card.parsed ? (card.parsed.phone || "").replace(/\D/g, "") : "";
     card.creds = {
-      api:  { login: this._genLogin(fn), pass: this._genPass(), phone: phone, locked: false },
-      log:  { login: this._genLogin(fn), pass: this._genPass(), locked: false },
+      api:  { login: this._genLogin(fn), pass: this._genPass(), phone: phone, locked: true },
+      log:  { login: this._genLogin(fn), pass: this._genPass(), locked: true },
       an: "",
       rn: "",
-      anrnLocked: false,
+      anrnLocked: true,
     };
   },
 
@@ -426,7 +426,7 @@ const TruistApp = {
           "<div class=\"tcred-ctrls\">" +
             "<button class=\"tcred-ctrl-btn\" data-action=\"copy-api\" data-id=\"" + c + "\" title=\"Скопировать\">📋</button>" +
             (apiLocked ? "" : "<button class=\"tcred-ctrl-btn\" data-action=\"refresh-api\" data-id=\"" + c + "\">🔄</button>") +
-            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-api-lock\" data-id=\"" + c + "\">" + (apiLocked ? "🔓" : "🔒") + "</button>" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-api-lock\" data-id=\"" + c + "\">" + (apiLocked ? "✏️" : "🔒") + "</button>" +
           "</div>" +
         "</div>" +
         "<div class=\"tcred-row\">" +
@@ -444,7 +444,7 @@ const TruistApp = {
           "<div class=\"tcred-ctrls\">" +
             "<button class=\"tcred-ctrl-btn\" data-action=\"copy-log\" data-id=\"" + c + "\" title=\"Скопировать\">📋</button>" +
             (logLocked ? "" : "<button class=\"tcred-ctrl-btn\" data-action=\"refresh-log\" data-id=\"" + c + "\">🔄</button>") +
-            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-log-lock\" data-id=\"" + c + "\">" + (logLocked ? "🔓" : "🔒") + "</button>" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-log-lock\" data-id=\"" + c + "\">" + (logLocked ? "✏️" : "🔒") + "</button>" +
           "</div>" +
         "</div>" +
         "<div class=\"tcred-row\">" +
@@ -459,7 +459,7 @@ const TruistApp = {
           "<span class=\"tcred-hdr-label\">AN | RN</span>" +
           "<div class=\"tcred-ctrls\">" +
             "<button class=\"tcred-ctrl-btn\" data-action=\"copy-anrn\" data-id=\"" + c + "\" title=\"Скопировать\">📋</button>" +
-            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-anrn-lock\" data-id=\"" + c + "\">" + (anrnLocked ? "🔓" : "🔒") + "</button>" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-anrn-lock\" data-id=\"" + c + "\">" + (anrnLocked ? "✏️" : "🔒") + "</button>" +
           "</div>" +
         "</div>" +
         "<div class=\"tcred-row\">" +
