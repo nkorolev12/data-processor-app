@@ -1255,3 +1255,15 @@ body {
   .truist-proxy-value { white-space: normal; word-break: break-all; }
   .truist-edit-form { grid-template-columns: 1fr; }
 }
+
+/* -- Truist Wrapping fixes -- */
+.truist-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.tcred-row {
+  flex-wrap: wrap;
+}
+.tcred-input {
+  min-width: 80px;
+}

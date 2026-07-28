@@ -1,4 +1,4 @@
-﻿// __ Truist Module (v2.1) __
+// __ Truist Module (v2.1) __
 
 const TruistApp = {
 
@@ -283,9 +283,13 @@ const TruistApp = {
     const editBtnLabel = isEditing ? "💾 Сохранить" : "✏️";
     const editAction   = isEditing ? "save-edit" : "toggle-edit";
 
+    const nameTitle = card.parsed && (card.parsed.firstName || card.parsed.lastName) 
+      ? (card.parsed.firstName || "") + " " + (card.parsed.lastName || "") 
+      : "Truist";
+
     el.innerHTML =
       "<div class=\"truist-card-header\">" +
-        "<div class=\"truist-card-title\">🏦 Truist" +
+        "<div class=\"truist-card-title\">🏦 " + this._esc(nameTitle.trim()) +
           (badgeText ? " <span class=\"truist-badge " + badgeClass + "\">" + badgeText + "</span>" : "") +
         "</div>" +
         "<div class=\"truist-card-header-btns\">" +
