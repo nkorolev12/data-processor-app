@@ -87,6 +87,7 @@ const TruistApp = {
       log:  { login: this._genLogin(fn), pass: this._genPass(), locked: false },
       an: "",
       rn: "",
+      anrnLocked: false,
     };
   },
 
@@ -103,7 +104,8 @@ const TruistApp = {
   async toggleLock(cardId, section) {
     const card = this.cards.find(c => c.id === cardId);
     if (!card || !card.creds) return;
-    card.creds[section].locked = !card.creds[section].locked;
+    if (section === "anrn") card.creds.anrnLocked = !card.creds.anrnLocked;
+    else card.creds[section].locked = !card.creds[section].locked;
     await DataStorage.saveTruistCards(this.cards);
     this._updateCardEl(cardId);
   },
@@ -184,6 +186,19 @@ const TruistApp = {
     const el = document.getElementById("tc_" + cardId);
     if (el) el.remove();
     this.renderStats();
+  },
+
+  /* -- Copy Section ---------------------------------------- */
+
+  _copySection(cardId, section) {
+    const card = this.cards.find(c => c.id === cardId);
+    if (!card || !card.creds) return;
+    const cr = card.creds;
+    let text = "";
+    if (section === "api") text = (cr.api.login || "") + "|" + (cr.api.pass || "") + "|" + (cr.api.phone || "");
+    if (section === "log") text = (cr.log.login || "") + "|" + (cr.log.pass || "");
+    if (section === "anrn") text = (cr.an || "") + "|" + (cr.rn || "");
+    navigator.clipboard.writeText(text).then(() => DataUtils.showToast("Данные скопированы"));
   },
 
   /* -- Copy All -------------------------------------------- */
@@ -333,6 +348,10 @@ const TruistApp = {
       else if (action === "refresh-log")       { await this.refreshSection(id, "log"); }
       else if (action === "toggle-api-lock")   { await this.toggleLock(id, "api"); }
       else if (action === "toggle-log-lock")   { await this.toggleLock(id, "log"); }
+      else if (action === "toggle-anrn-lock")  { await this.toggleLock(id, "anrn"); }
+      else if (action === "copy-api")          { this._copySection(id, "api"); }
+      else if (action === "copy-log")          { this._copySection(id, "log"); }
+      else if (action === "copy-anrn")         { this._copySection(id, "anrn"); }
     });
 
     el.querySelectorAll(".tcred-input[data-cred]").forEach(inp => {
@@ -387,17 +406,25 @@ const TruistApp = {
     const cr  = card.creds;
     const apiLocked = cr.api.locked;
     const logLocked = cr.log.locked;
+    const anrnLocked = !!cr.anrnLocked;
 
     const inp = (cred, field, val, locked) =>
       "<input class=\"tcred-input" + (locked ? " tcred-locked" : "") + "\" " +
       "data-cred=\"" + cred + "\" data-field=\"" + field + "\" data-id=\"" + c + "\" " +
       "value=\"" + this._esc(val || "") + "\"" + (locked ? " readonly" : "") + ">";
 
+    const anrnInp = (field, val, locked) =>
+      "<input class=\"tcred-input" + (locked ? " tcred-locked" : "") + "\" " +
+      "data-anrn=\"" + field + "\" data-id=\"" + c + "\" " +
+      "value=\"" + this._esc(val || "") + "\" placeholder=\"" + field.toUpperCase() + "\"" +
+      (locked ? " readonly" : "") + ">";
+
     return (
       "<div class=\"tcred-section\">" +
         "<div class=\"tcred-header\">" +
           "<span class=\"tcred-hdr-label\">383api.com | pass | number</span>" +
           "<div class=\"tcred-ctrls\">" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"copy-api\" data-id=\"" + c + "\" title=\"Скопировать\">📋</button>" +
             (apiLocked ? "" : "<button class=\"tcred-ctrl-btn\" data-action=\"refresh-api\" data-id=\"" + c + "\">🔄</button>") +
             "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-api-lock\" data-id=\"" + c + "\">" + (apiLocked ? "🔓" : "🔒") + "</button>" +
           "</div>" +
@@ -415,6 +442,7 @@ const TruistApp = {
         "<div class=\"tcred-header\">" +
           "<span class=\"tcred-hdr-label\">log | pass</span>" +
           "<div class=\"tcred-ctrls\">" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"copy-log\" data-id=\"" + c + "\" title=\"Скопировать\">📋</button>" +
             (logLocked ? "" : "<button class=\"tcred-ctrl-btn\" data-action=\"refresh-log\" data-id=\"" + c + "\">🔄</button>") +
             "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-log-lock\" data-id=\"" + c + "\">" + (logLocked ? "🔓" : "🔒") + "</button>" +
           "</div>" +
@@ -427,11 +455,17 @@ const TruistApp = {
       "</div>" +
 
       "<div class=\"tcred-section\">" +
-        "<div class=\"tcred-header\"><span class=\"tcred-hdr-label\">AN | RN</span></div>" +
+        "<div class=\"tcred-header\">" +
+          "<span class=\"tcred-hdr-label\">AN | RN</span>" +
+          "<div class=\"tcred-ctrls\">" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"copy-anrn\" data-id=\"" + c + "\" title=\"Скопировать\">📋</button>" +
+            "<button class=\"tcred-ctrl-btn\" data-action=\"toggle-anrn-lock\" data-id=\"" + c + "\">" + (anrnLocked ? "🔓" : "🔒") + "</button>" +
+          "</div>" +
+        "</div>" +
         "<div class=\"tcred-row\">" +
-          "<input class=\"tcred-input\" data-anrn=\"an\" data-id=\"" + c + "\" value=\"" + this._esc(cr.an || "") + "\" placeholder=\"AN\">" +
+          anrnInp("an", cr.an, anrnLocked) +
           "<span class=\"tcred-sep\">|</span>" +
-          "<input class=\"tcred-input\" data-anrn=\"rn\" data-id=\"" + c + "\" value=\"" + this._esc(cr.rn || "") + "\" placeholder=\"RN\">" +
+          anrnInp("rn", cr.rn, anrnLocked) +
         "</div>" +
       "</div>"
     );
