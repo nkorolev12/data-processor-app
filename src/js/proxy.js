@@ -51,6 +51,16 @@ const ProxyGenerator = {
   },
 
   /**
+   * GeoV2 Proxy — для создания почты (новый формат)
+   * Format: geo.g-w.info:10800:user-W8g8H6BplIfXLq9z-type-residential-session-{SESSION}-country-us-state-{state}-rotation-20-udp-1:1QuoUGGQZw9fIzTu
+   */
+  generateGeoV2Proxy(stateCode) {
+    const state = this.STATE_MAP[stateCode.toUpperCase()] || stateCode.toLowerCase();
+    const session = this._randomSession(7);
+    return `geo.g-w.info:10800:user-W8g8H6BplIfXLq9z-type-residential-session-${session}-country-us-state-${state}-rotation-20-udp-1:1QuoUGGQZw9fIzTu`;
+  },
+
+  /**
    * FlashProxy — для регистрации BOA
    * Format: proxy.psbproxy.io:12321:d848096630c24e71811fe26e7257cc:Opad42F6YHGJVmRU_country-us_state-{state}_session-{sid}_lifetime-30m
    */

@@ -366,6 +366,8 @@ const App = {
       const type = typeSelect.value;
       if (type === 'psb') {
         currentProxy = ProxyGenerator.generateFlashProxy(state);
+      } else if (type === 'geo-v2') {
+        currentProxy = ProxyGenerator.generateGeoV2Proxy(state);
       } else {
         currentProxy = ProxyGenerator.generateEmailProxy(state);
       }
