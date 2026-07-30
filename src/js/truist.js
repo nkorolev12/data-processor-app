@@ -26,36 +26,6 @@ const TruistApp = {
       this.addBlocks(text);
       ta.value = "";
     });
-    const btnBiz = document.getElementById("btn-add-truist-biz");
-    if (btnBiz) btnBiz.addEventListener("click", () => this.addBusinessCard());
-  },
-
-  async addBusinessCard() {
-    // Load business fulls from BOA app
-    const bizFulls = (typeof BankApp !== 'undefined' && BankApp.businessFulls)
-      ? BankApp.businessFulls
-      : (await DataStorage.loadBusinessFulls());
-    const free = bizFulls.filter(b => !b.used);
-    if (!free.length) { DataUtils.showToast('Нет свободных бизнес фулок!'); return; }
-    const biz = free[Math.floor(Math.random() * free.length)];
-    biz.used = true;
-    await DataStorage.saveBusinessFulls(bizFulls);
-    const card = {
-      id:        Date.now() + Math.floor(Math.random() * 99999),
-      createdAt: new Date().toISOString(),
-      raw:       "",
-      parsed:    null,
-      bizOnly:   true,
-      business:  { ...biz },
-      notes:     "",
-      proxy:     TruistProxy.generate("NY"),
-      status:    null,
-      creds:     null,
-    };
-    this.cards.unshift(card);
-    await DataStorage.saveTruistCards(this.cards);
-    this.renderCards();
-    DataUtils.showToast("Бизнес-карточка создана");
   },
 
 
@@ -161,17 +131,12 @@ const TruistApp = {
     const card = this.cards.find(c => c.id === cardId);
     const cardEl = document.getElementById("tc_" + cardId);
     if (card && cardEl) {
-      if (card.bizOnly) {
-        const ta = cardEl.querySelector(".truist-notes-textarea");
-        if (ta) card.notes = ta.value;
-      } else {
-        const ta = cardEl.querySelector(".truist-edit-textarea");
-        if (ta) {
-          const val = ta.value.trim();
-          if (val) {
-            card.raw = val;
-            card.parsed = DataParser.parseMultilinePersonalBlock(val) || card.parsed;
-          }
+      const ta = cardEl.querySelector(".truist-edit-textarea");
+      if (ta) {
+        const val = ta.value.trim();
+        if (val) {
+          card.raw = val;
+          card.parsed = DataParser.parseMultilinePersonalBlock(val) || card.parsed;
         }
       }
     }
@@ -339,11 +304,9 @@ const TruistApp = {
     const editBtnLabel = isEditing ? "💾 Сохранить" : "✏️";
     const editAction   = isEditing ? "save-edit" : "toggle-edit";
 
-    const nameTitle = card.bizOnly
-      ? (card.business ? (card.business.companyName || "Бизнес") : "Бизнес")
-      : (card.parsed && (card.parsed.firstName || card.parsed.lastName)
-          ? (card.parsed.firstName || "") + " " + (card.parsed.lastName || "")
-          : "Truist");
+    const nameTitle = card.parsed && (card.parsed.firstName || card.parsed.lastName)
+      ? (card.parsed.firstName || "") + " " + (card.parsed.lastName || "")
+      : "Truist";
 
     el.innerHTML =
       "<div class=\"truist-card-header\">" +
@@ -412,31 +375,6 @@ const TruistApp = {
   /* -- Raw Lines (default view) ---------------------------- */
 
   _renderRawLines(card) {
-    // Business-only card: show biz block + notes textarea
-    if (card.bizOnly) {
-      const b = card.business || {};
-      const bizLines = [
-        b.companyName ? "🏢 " + b.companyName : null,
-        b.ein ? "🔑 EIN: " + b.ein : null,
-        b.dateFiled ? "📅 " + b.dateFiled : null,
-        b.state ? "📍 " + b.state : null,
-        b.entityType ? "📋 " + b.entityType : null,
-      ].filter(Boolean);
-      const bizBlock = bizLines.length
-        ? "<div class=\"truist-lines-block truist-biz-block\">" +
-            bizLines.map(l => "<div class=\"truist-line\">" + this._esc(l) + "</div>").join("") +
-          "</div>"
-        : "";
-      const notes = card.notes || "";
-      const isEditing = this._editingCards.has(card.id);
-      const notesEl = isEditing
-        ? "<textarea class=\"truist-notes-textarea\" placeholder=\"Заметки...\">" + this._esc(notes) + "</textarea>"
-        : (notes
-            ? "<div class=\"truist-notes-display\">" + this._esc(notes).replace(/\n/g, "<br>") + "</div>"
-            : "<div class=\"truist-notes-empty\">Нет заметок. Нажмите ✏️ чтобы добавить.</div>");
-      return bizBlock + notesEl;
-    }
-    // Normal card: lines with emoji
     const lines = card.raw.split("\n").map(l => l.trim()).filter(Boolean);
     return "<div class=\"truist-lines-block\">" +
       lines.map(l => "<div class=\"truist-line\"><span class=\"truist-line-emoji\">" + this._lineEmoji(l) + "</span> " + this._esc(l) + "</div>").join("") +
@@ -446,7 +384,6 @@ const TruistApp = {
   /* -- Edit Form (edit mode) ------------------------------- */
 
   _renderEditForm(card) {
-    if (card.bizOnly) return this._renderRawLines(card); // Notes textarea handled inside _renderRawLines
     return "<textarea class=\"truist-edit-textarea\" spellcheck=\"false\">" + this._esc(card.raw) + "</textarea>";
   },
 

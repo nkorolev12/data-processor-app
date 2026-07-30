@@ -342,6 +342,8 @@ const App = {
 
   setupCreateButton() {
     document.getElementById('btn-create-full').addEventListener('click', () => this.createPersonalCard());
+    const btnBiz = document.getElementById('btn-create-biz-only');
+    if (btnBiz) btnBiz.addEventListener('click', () => this.createBusinessOnlyCard());
   },
 
   /* ── Manual Create (Modal) ────────────────────────────── */
@@ -474,6 +476,47 @@ const App = {
     this.renderSecondaries();
     DashboardManager.refresh();
     DataUtils.showToast('Карточка удалена 🗑️');
+  },
+
+  async createBusinessOnlyCard() {
+    const business = this.businessFulls.find(b => !b.used);
+    if (!business) { DataUtils.showToast('Нет свободных бизнес фулок!'); return; }
+    business.used = true;
+    const readyFull = {
+      id:                  Date.now(),
+      createdAt:           new Date().toISOString(),
+      personal:            null,
+      business:            { ...business },
+      bizOnly:             true,
+      notes:               '',
+      manualEmail:         '',
+      manualEmailPassword: '',
+      pendingCode:         '',
+      coreProxy:           ProxyGenerator.generateEmailProxy('NY'),
+      flashProxy:          ProxyGenerator.generateFlashProxy('NY'),
+      status:              null,
+      statusDate:          null,
+    };
+    this.readyFulls.unshift(readyFull);
+    await Promise.all([
+      DataStorage.saveBusinessFulls(this.businessFulls),
+      DataStorage.saveReadyFulls(this.readyFulls)
+    ]);
+    this.renderList('business');
+    this.renderReadyFulls();
+    DashboardManager.refresh();
+    DataUtils.showToast('Бизнес-карточка создана 🏢');
+  },
+
+  async saveNotes(fullId) {
+    const full = this.readyFulls.find(f => f.id === fullId);
+    if (!full) return;
+    const safeId = String(fullId).replace(/\./g, '_');
+    const ta = document.getElementById(`notes-edit-${safeId}`);
+    if (ta) full.notes = ta.value;
+    await DataStorage.saveReadyFulls(this.readyFulls);
+    this._refreshCard(fullId);
+    DataUtils.showToast('Заметки сохранены ✅');
   },
 
   async createPersonalCard() {
@@ -912,14 +955,16 @@ const App = {
     if (full.status === 'pending')  { badgeClass = 'status-pending';  badgeText = 'Пендинг'; }
     if (full.status === 'rejected') { badgeClass = 'status-rejected'; badgeText = 'Отказ'; }
 
-    // Phone section (inline edit)
+    // Phone section (inline edit) — only for non-bizOnly cards
     const isEditingPhone = this._phoneEditIds.has(full.id);
-    const phoneDisplay = isEditingPhone
-      ? `<input class="inline-edit-input" id="phone-edit-${full.id}" value="${this._esc(p.phone || '')}" placeholder="(817) 630-6868">
-         <button class="btn-save-phone" data-full-id="${full.id}">✓</button>
-         <button class="btn-cancel-phone" data-full-id="${full.id}">✗</button>`
-      : `<span>${p.phone ? this._esc(p.phone) : '<span class="text-empty">не указан</span>'}${p.extra ? ', ' + this._esc(p.extra) : ''}</span>
-         <button class="btn-edit-phone" title="Редактировать телефон" data-full-id="${full.id}">✏️</button>`;
+    const phoneDisplay = (!full.bizOnly && p) ? (
+      isEditingPhone
+        ? `<input class="inline-edit-input" id="phone-edit-${full.id}" value="${this._esc(p.phone || '')}" placeholder="(817) 630-6868">
+           <button class="btn-save-phone" data-full-id="${full.id}">✓</button>
+           <button class="btn-cancel-phone" data-full-id="${full.id}">✗</button>`
+        : `<span>${p.phone ? this._esc(p.phone) : '<span class="text-empty">не указан</span>'}${p.extra ? ', ' + this._esc(p.extra) : ''}</span>
+           <button class="btn-edit-phone" title="Редактировать телефон" data-full-id="${full.id}">✏️</button>`
+    ) : '';
 
     // Business section HTML
     const isEditingBiz = this._bizEditIds.has(full.id);
@@ -1110,7 +1155,7 @@ const App = {
             const tooltip = detailNum && detailNum !== displayNum ? detailNum : '';
             return `<span class="card-number"${tooltip ? ` title="${tooltip}"` : ''}>${displayNum}</span>`;
           })()}
-          <span class="card-name">${this._esc(p.firstName)} ${this._esc(p.lastName)}</span>
+          <span class="card-name">${full.bizOnly ? this._esc((b && b.companyName) || 'Бизнес') : this._esc((p && p.firstName) || '') + ' ' + this._esc((p && p.lastName) || '')}</span>
           ${full.secondaryIndex !== null && full.secondaryIndex !== undefined
             ? `<span class="secondary-badge">Вторяк ${full.secondaryIndex}</span>`
             : ''}
@@ -1125,6 +1170,21 @@ const App = {
       <div class="card-body">
 
         ${(() => {
+          if (full.bizOnly) {
+            // Business-only card: show notes textarea instead of personal block
+            const safeIdN = String(full.id).replace(/\./g, '_');
+            const notes = full.notes || '';
+            return `<div class="card-data-section biz-only-notes-section">
+              <div class="section-label">
+                📝 Заметки
+              </div>
+              <textarea id="notes-edit-${safeIdN}" class="data-input biz-details-textarea" rows="4"
+                placeholder="Введите заметки...">${this._esc(notes)}</textarea>
+              <div class="email-btn-row" style="margin-top:6px;">
+                <button class="btn-save-notes" data-full-id="${full.id}">Сохранить заметки</button>
+              </div>
+            </div>`;
+          }
           const isEditingPersonal = this._personalEditIds.has(full.id);
           const safeIdP = String(full.id).replace(/\./g, '_');
           const personalTextareaId = `personal-edit-${safeIdP}`;
@@ -1303,6 +1363,10 @@ const App = {
         this._updateCard(full.id);
       });
     }
+
+    // ── Save notes button (for bizOnly cards)
+    const saveNotesBtn = card.querySelector('.btn-save-notes');
+    if (saveNotesBtn) saveNotesBtn.addEventListener('click', () => this.saveNotes(full.id));
 
     // ── Save email button
     const saveEmailBtn = card.querySelector('.btn-save-email');

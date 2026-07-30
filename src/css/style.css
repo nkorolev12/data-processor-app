@@ -1350,3 +1350,16 @@ body {
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
 }
+
+/* -- BOA Biz-Only Card button & notes -- */
+.btn-create-biz-only {
+  background: linear-gradient(135deg, rgba(42,122,82,0.15), rgba(15,76,53,0.2)) !important;
+  border-color: rgba(42,122,82,0.5) !important;
+}
+.btn-create-biz-only:hover {
+  background: linear-gradient(135deg, rgba(42,122,82,0.3), rgba(15,76,53,0.35)) !important;
+  border-color: #2a7a52 !important;
+}
+.biz-only-notes-section {
+  border-left: 3px solid rgba(42,122,82,0.5);
+}
