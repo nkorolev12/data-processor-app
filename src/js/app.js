@@ -1698,11 +1698,17 @@ const App = {
     });
 
     // ── Delete card button
-    card.querySelector('.btn-delete-card').addEventListener('click', () => {
-      if (confirm(`Удалить карточку ${full.personal.firstName} ${full.personal.lastName}?`)) {
-        this.deleteCard(full.id);
-      }
-    });
+    const deleteBtn = card.querySelector('.btn-delete-card');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        const cardName = full.bizOnly 
+          ? (full.business ? full.business.companyName : 'Бизнес') 
+          : (full.personal ? `${full.personal.firstName} ${full.personal.lastName}` : 'Карточку');
+        if (confirm(`Удалить карточку ${cardName}?`)) {
+          this.deleteCard(full.id);
+        }
+      });
+    }
 
     return card;
   },
