@@ -1700,11 +1700,12 @@ const App = {
     // ── Delete card button
     const deleteBtn = card.querySelector('.btn-delete-card');
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => {
+      deleteBtn.addEventListener('click', async () => {
         const cardName = full.bizOnly 
           ? (full.business ? full.business.companyName : 'Бизнес') 
           : (full.personal ? `${full.personal.firstName} ${full.personal.lastName}` : 'Карточку');
-        if (confirm(`Удалить карточку ${cardName}?`)) {
+        const confirmed = await DataUtils.confirm(`Вы уверены, что хотите удалить карточку:\n${cardName}?`);
+        if (confirmed) {
           this.deleteCard(full.id);
         }
       });

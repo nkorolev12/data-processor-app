@@ -50,5 +50,53 @@ const DataUtils = {
   formatDate(dateStr) {
     const [y, m, d] = dateStr.split('-');
     return `${d}.${m}.${y}`;
+  },
+
+  /** Custom Confirm Dialog (returns Promise<boolean>) */
+  confirm(message, options = {}) {
+    return new Promise(resolve => {
+      const modal = document.getElementById('custom-confirm-modal');
+      if (!modal) return resolve(window.confirm(message));
+
+      const titleEl = document.getElementById('custom-confirm-title');
+      const msgEl = document.getElementById('custom-confirm-message');
+      const iconEl = document.getElementById('custom-confirm-icon');
+      const okBtn = document.getElementById('custom-confirm-ok');
+      const cancelBtn = document.getElementById('custom-confirm-cancel');
+
+      if (options.title) titleEl.textContent = options.title;
+      else titleEl.textContent = 'Подтверждение';
+
+      if (options.icon) iconEl.textContent = options.icon;
+      else iconEl.textContent = '⚠️';
+
+      if (options.okText) okBtn.textContent = options.okText;
+      else okBtn.textContent = 'Да, удалить';
+
+      if (options.danger === false) {
+        okBtn.style.background = 'rgba(124,58,237,0.15)';
+        okBtn.style.color = 'var(--accent-light)';
+        okBtn.style.borderColor = 'rgba(124,58,237,0.3)';
+      } else {
+        okBtn.style.background = 'rgba(239,68,68,0.15)';
+        okBtn.style.color = '#fca5a5';
+        okBtn.style.borderColor = 'rgba(239,68,68,0.3)';
+      }
+
+      msgEl.textContent = message;
+      modal.style.display = 'flex';
+
+      const cleanup = () => {
+        modal.style.display = 'none';
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+      };
+
+      const onOk = () => { cleanup(); resolve(true); };
+      const onCancel = () => { cleanup(); resolve(false); };
+
+      okBtn.addEventListener('click', onOk);
+      cancelBtn.addEventListener('click', onCancel);
+    });
   }
 };
