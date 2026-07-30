@@ -515,7 +515,7 @@ const App = {
     const ta = document.getElementById(`notes-edit-${safeId}`);
     if (ta) full.notes = ta.value;
     await DataStorage.saveReadyFulls(this.readyFulls);
-    this._refreshCard(fullId);
+    this._updateCard(fullId);
     DataUtils.showToast('Заметки сохранены ✅');
   },
 
@@ -1174,14 +1174,14 @@ const App = {
             // Business-only card: show notes textarea instead of personal block
             const safeIdN = String(full.id).replace(/\./g, '_');
             const notes = full.notes || '';
-            return `<div class="card-data-section biz-only-notes-section">
+            return `<div class="card-data-section">
               <div class="section-label">
                 📝 Заметки
               </div>
               <textarea id="notes-edit-${safeIdN}" class="data-input biz-details-textarea" rows="4"
                 placeholder="Введите заметки...">${this._esc(notes)}</textarea>
               <div class="email-btn-row" style="margin-top:6px;">
-                <button class="btn-save-notes" data-full-id="${full.id}">Сохранить заметки</button>
+                <button class="btn-personal-save btn-save-notes" data-full-id="${full.id}">Сохранить заметки</button>
               </div>
             </div>`;
           }

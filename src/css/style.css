@@ -1360,9 +1360,6 @@ body {
   background: linear-gradient(135deg, rgba(42,122,82,0.3), rgba(15,76,53,0.35)) !important;
   border-color: #2a7a52 !important;
 }
-.biz-only-notes-section {
-  border-left: 3px solid rgba(42,122,82,0.5);
-}
 
 /* -- Custom Proxy Block -- */
 .proxy-block-custom {
