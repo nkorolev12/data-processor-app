@@ -1363,3 +1363,48 @@ body {
 .biz-only-notes-section {
   border-left: 3px solid rgba(42,122,82,0.5);
 }
+
+/* -- Custom Proxy Block -- */
+.proxy-block-custom {
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+  margin-top: 6px;
+}
+.custom-proxy-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.custom-proxy-state {
+  width: 70px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-align: center;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.custom-proxy-state:focus {
+  border-color: var(--accent);
+}
+.custom-proxy-type {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+.custom-proxy-value {
+  opacity: 0.85;
+  font-style: italic;
+}

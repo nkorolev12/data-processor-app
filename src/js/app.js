@@ -1254,6 +1254,27 @@ const App = {
             </div>
             <div class="proxy-text" data-proxy-value="flash">${this._esc(full.flashProxy)}</div>
           </div>
+          ${(() => {
+            const safeId = String(full.id).replace(/\./g, '_');
+            const cp = full.customProxy || { state: '', type: 'geo', value: '' };
+            return `<div class="proxy-block proxy-block-custom">
+              <div class="proxy-header">
+                <span>🌐 Доп. прокси</span>
+                <div class="proxy-actions">
+                  <button class="btn-refresh-custom" data-id="${full.id}" title="Обновить">🔄</button>
+                  <button class="btn-copy-custom" data-id="${full.id}">📋 COPY</button>
+                </div>
+              </div>
+              <div class="custom-proxy-controls">
+                <input class="custom-proxy-state" id="cps-${safeId}" placeholder="Штат (NY)" maxlength="2" value="${this._esc(cp.state)}">
+                <select class="custom-proxy-type" id="cpt-${safeId}">
+                  <option value="geo"${cp.type === 'geo' ? ' selected' : ''}>geo.g-w.info (socks5)</option>
+                  <option value="psb"${cp.type === 'psb' ? ' selected' : ''}>psbproxy.io</option>
+                </select>
+              </div>
+              <div class="proxy-text custom-proxy-value" id="cpv-${safeId}">${this._esc(cp.value || '— введите штат и нажмите 🔄')}</div>
+            </div>`;
+          })()}
         </div>
 
         ${full.status === null ? `
@@ -1536,11 +1557,11 @@ const App = {
       });
     });
 
-    // ── Refresh proxy buttons
+    // ── Refresh proxy buttons (core / flash)
     card.querySelectorAll('.btn-refresh').forEach(btn => {
       btn.addEventListener('click', async () => {
         const type = btn.dataset.refreshType;
-        const stateCode = full.personal.state;
+        const stateCode = (full.personal && full.personal.state) ? full.personal.state : (full.customProxy && full.customProxy.state) || 'NY';
         btn.classList.add('spinning');
         const newProxy = type === 'core'
           ? ProxyGenerator.generateEmailProxy(stateCode)
@@ -1554,6 +1575,37 @@ const App = {
         DataUtils.showToast('Прокси обновлён 🔄');
       });
     });
+
+    // ── Custom proxy: refresh
+    const refreshCustomBtn = card.querySelector('.btn-refresh-custom');
+    if (refreshCustomBtn) {
+      refreshCustomBtn.addEventListener('click', async () => {
+        const safeId = String(full.id).replace(/\./g, '_');
+        const stateInput = card.querySelector(`#cps-${safeId}`);
+        const typeSelect = card.querySelector(`#cpt-${safeId}`);
+        const state = (stateInput ? stateInput.value.trim().toUpperCase() : '') || 'NY';
+        const type  = typeSelect ? typeSelect.value : 'geo';
+        const proxy = type === 'psb'
+          ? ProxyGenerator.generateFlashProxy(state)
+          : ProxyGenerator.generateEmailProxy(state);
+        full.customProxy = { state, type, value: proxy };
+        const valEl = card.querySelector(`#cpv-${safeId}`);
+        if (valEl) valEl.textContent = proxy;
+        await DataStorage.saveReadyFulls(this.readyFulls);
+        DataUtils.showToast('Доп. прокси обновлён 🔄');
+      });
+    }
+
+    // ── Custom proxy: copy
+    const copyCustomBtn = card.querySelector('.btn-copy-custom');
+    if (copyCustomBtn) {
+      copyCustomBtn.addEventListener('click', () => {
+        const val = full.customProxy && full.customProxy.value;
+        if (!val) { DataUtils.showToast('Сначала обновите прокси!'); return; }
+        DataUtils.copyToClipboard(val);
+        DataUtils.showToast('Доп. прокси скопирован 📋');
+      });
+    }
 
     // ── Status buttons
     card.querySelectorAll('.btn-status').forEach(btn => {
