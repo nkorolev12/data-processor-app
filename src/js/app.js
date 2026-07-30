@@ -1217,9 +1217,6 @@ const App = {
               </div>
               <textarea id="notes-edit-${safeIdN}" class="data-input biz-details-textarea" rows="4"
                 placeholder="Введите заметки...">${this._esc(notes)}</textarea>
-              <div class="email-btn-row" style="margin-top:6px;">
-                <button class="btn-personal-save btn-save-notes" data-full-id="${full.id}">Сохранить заметки</button>
-              </div>
             </div>`;
           }
           const isEditingPersonal = this._personalEditIds.has(full.id);
@@ -1403,9 +1400,14 @@ const App = {
       });
     }
 
-    // ── Save notes button (for bizOnly cards)
-    const saveNotesBtn = card.querySelector('.btn-save-notes');
-    if (saveNotesBtn) saveNotesBtn.addEventListener('click', () => this.saveNotes(full.id));
+    // ── Save notes auto-save (for bizOnly cards)
+    const notesTa = card.querySelector('.biz-details-textarea');
+    if (notesTa) {
+      notesTa.addEventListener('change', () => {
+        full.notes = notesTa.value;
+        DataStorage.saveReadyFulls(this.readyFulls);
+      });
+    }
 
     // ── Save email button
     const saveEmailBtn = card.querySelector('.btn-save-email');
