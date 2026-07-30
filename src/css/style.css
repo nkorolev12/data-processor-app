@@ -1288,3 +1288,65 @@ body {
 .truist-edit-textarea:focus {
   border-color: var(--accent);
 }
+
+/* -- Truist Biz-Only Card -- */
+.truist-add-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.truist-add-row .btn-add {
+  flex: 1;
+}
+.btn-add-biz {
+  background: linear-gradient(135deg, #1a3a2a, #0f4c35) !important;
+  border-color: #2a7a52 !important;
+  color: #5fe0a0 !important;
+}
+.btn-add-biz:hover {
+  background: linear-gradient(135deg, #1f4a34, #1a6045) !important;
+}
+
+.truist-biz-block {
+  background: rgba(42,122,82,0.08);
+  border: 1px solid rgba(42,122,82,0.3);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+.truist-notes-textarea {
+  width: 100%;
+  min-height: 120px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.truist-notes-textarea:focus {
+  border-color: var(--accent);
+}
+.truist-notes-display {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.truist-notes-empty {
+  padding: 14px 12px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
