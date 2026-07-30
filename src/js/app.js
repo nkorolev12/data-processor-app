@@ -10,6 +10,7 @@ const App = {
   _phoneEditIds: new Set(),
   _bizEditIds: new Set(),
   _personalEditIds: new Set(),
+  _notesEditIds: new Set(),
 
   /* ── Init ──────────────────────────────────────────────── */
 
@@ -1208,15 +1209,41 @@ const App = {
 
         ${(() => {
           if (full.bizOnly) {
-            // Business-only card: show notes textarea instead of personal block
+            // Business-only card: notes section
+            const isEditingNotes = this._notesEditIds.has(full.id) || !full.notes;
             const safeIdN = String(full.id).replace(/\./g, '_');
             const notes = full.notes || '';
+            
+            let notesContent = '';
+            if (isEditingNotes) {
+              notesContent = `
+                <textarea id="notes-edit-${safeIdN}" class="data-input biz-details-textarea" rows="8"
+                  placeholder="Введите данные...">${this._esc(notes)}</textarea>
+                <div class="email-btn-row" style="margin-top:6px;">
+                  <button class="btn-personal-save btn-save-notes" data-full-id="${full.id}">Сохранить</button>
+                </div>
+              `;
+            } else {
+              const notesLines = notes.split('\n').filter(l => l.trim() !== '');
+              let notesHtml = '';
+              if (notesLines.length > 0) {
+                notesHtml = notesLines.map(l => `<div class="data-line">${this._esc(l)}</div>`).join('');
+              } else {
+                notesHtml = `<div class="data-line" style="color:var(--text-muted);">Нет данных</div>`;
+              }
+              notesContent = `
+                <div style="margin-top: 8px;">
+                  ${notesHtml}
+                </div>
+              `;
+            }
+
             return `<div class="card-data-section">
-              <div class="section-label">
-                📝 Заметки
+              <div class="section-label" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                <span>📝 ЗАМЕТКИ</span>
+                ${!isEditingNotes ? `<button class="btn-edit btn-edit-notes" data-full-id="${full.id}">✏️ Изменить</button>` : ''}
               </div>
-              <textarea id="notes-edit-${safeIdN}" class="data-input biz-details-textarea" rows="4"
-                placeholder="Введите заметки...">${this._esc(notes)}</textarea>
+              ${notesContent}
             </div>`;
           }
           const isEditingPersonal = this._personalEditIds.has(full.id);
@@ -1400,12 +1427,26 @@ const App = {
       });
     }
 
-    // ── Save notes auto-save (for bizOnly cards)
-    const notesTa = card.querySelector('.biz-details-textarea');
-    if (notesTa) {
-      notesTa.addEventListener('change', () => {
-        full.notes = notesTa.value;
-        DataStorage.saveReadyFulls(this.readyFulls);
+    // ── Notes edit button
+    const editNotesBtn = card.querySelector('.btn-edit-notes');
+    if (editNotesBtn) {
+      editNotesBtn.addEventListener('click', () => {
+        this._notesEditIds.add(full.id);
+        this._updateCard(full.id);
+      });
+    }
+
+    // ── Notes save button
+    const saveNotesBtn = card.querySelector('.btn-save-notes');
+    if (saveNotesBtn) {
+      saveNotesBtn.addEventListener('click', () => {
+        const safeIdN = String(full.id).replace(/\./g, '_');
+        const ta = document.getElementById(`notes-edit-${safeIdN}`);
+        if (ta) {
+          full.notes = ta.value;
+          this._notesEditIds.delete(full.id);
+          DataStorage.saveReadyFulls(this.readyFulls).then(() => this._updateCard(full.id));
+        }
       });
     }
 
