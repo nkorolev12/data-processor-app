@@ -1405,3 +1405,64 @@ body {
   opacity: 0.85;
   font-style: italic;
 }
+
+/* -- Global Proxy Generator -- */
+.global-proxy-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.global-proxy-container .proxy-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.global-proxy-container .proxy-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.global-proxy-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.proxy-state-input {
+  width: 80px;
+  text-transform: uppercase;
+  text-align: center;
+}
+.proxy-type-select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+.proxy-type-select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.btn-proxy {
+  margin-top: 0;
+  padding: 8px 16px;
+}
+.global-proxy-result {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--text-secondary);
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  user-select: all;
+}

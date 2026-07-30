@@ -105,6 +105,26 @@
         </div>
       </div>
 
+      <!-- Global Proxy Generator -->
+      <div class="global-proxy-container">
+        <div class="proxy-header">
+          <span class="column-icon">🌐</span>
+          <h3>Генератор прокси</h3>
+        </div>
+        <div class="global-proxy-controls">
+          <input type="text" id="global-proxy-state" class="data-input proxy-state-input" placeholder="Штат (NY)" maxlength="2">
+          <select id="global-proxy-type" class="data-input proxy-type-select">
+            <option value="geo">geo.g-w.info (socks5)</option>
+            <option value="psb">psbproxy.io</option>
+          </select>
+          <button id="btn-global-proxy-refresh" class="btn-add btn-proxy">🔄 Сгенерировать</button>
+          <button id="btn-global-proxy-copy" class="btn-add btn-proxy">📋 Скопировать</button>
+        </div>
+        <div class="global-proxy-result" id="global-proxy-result">
+          — введите штат и нажмите 🔄
+        </div>
+      </div>
+
       <!-- Create buttons -->
       <div class="create-section">
         <button id="btn-create-full" class="btn-create">
