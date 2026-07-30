@@ -473,7 +473,7 @@ const App = {
     if (idx === -1) return;
 
     const full = this.readyFulls[idx];
-    if (!full.isManual) {
+    if (!full.isManual && full.personal) {
       const p = this.personalFulls.find(x => x.id === full.personal.id);
       if (p) p.used = false;
     }
