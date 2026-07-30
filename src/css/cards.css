@@ -403,6 +403,9 @@
   font-size: 0.78rem;
   resize: vertical;
   box-sizing: border-box;
+  user-select: auto !important;
+  pointer-events: auto !important;
+  -webkit-user-select: auto !important;
 }
 .biz-details-textarea:focus {
   outline: none;
