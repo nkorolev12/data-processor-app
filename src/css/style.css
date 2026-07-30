@@ -1430,6 +1430,8 @@ body {
   display: flex;
   gap: 10px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .proxy-state-input {
   width: 80px;
@@ -1438,6 +1440,7 @@ body {
 }
 .proxy-type-select {
   flex: 1;
+  min-width: 180px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1446,6 +1449,7 @@ body {
   font-family: inherit;
   font-size: 0.9rem;
   outline: none;
+  cursor: pointer;
 }
 .proxy-type-select option {
   background: var(--bg-secondary);
