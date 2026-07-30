@@ -1241,7 +1241,7 @@ const App = {
             return `<div class="card-data-section">
               <div class="section-label" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                 <span>📝 ЗАМЕТКИ</span>
-                ${!isEditingNotes ? `<button class="btn-edit btn-edit-notes" data-full-id="${full.id}">✏️ Изменить</button>` : ''}
+                ${!isEditingNotes ? `<button class="btn-edit btn-edit-notes" data-full-id="${full.id}" style="margin-left:auto;background:none;border:none;color:var(--accent);font-size:0.8rem;cursor:pointer;">✏️ Изменить</button>` : ''}
               </div>
               ${notesContent}
             </div>`;
