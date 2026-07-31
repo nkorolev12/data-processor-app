@@ -1665,8 +1665,12 @@ const App = {
     card.querySelectorAll('.btn-session-copy').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.getAttribute('data-session-type');
-        const p = full.personal;
-        const name = `${p.firstName} ${p.lastName}`;
+        let name = '';
+        if (full.bizOnly) {
+          name = full.business ? full.business.companyName.trim() : 'Бизнес';
+        } else {
+          name = `${full.personal.firstName} ${full.personal.lastName}`;
+        }
         const secSuffix = (full.secondaryIndex ? ` вторяк ${full.secondaryIndex}` : '');
 
         let text = '';
@@ -1749,7 +1753,42 @@ const App = {
 
   /* ── Format for Telegram (Pending) ────────────────────── */
 
+  _formatBizOnlyForTelegram(full) {
+    const b = full.business;
+    const lines = [];
+
+    if (b) {
+      lines.push(`${b.companyName}`);
+      lines.push(`${b.ein}`);
+      const [yr, mo, dy] = b.date.split('.');
+      const d = b.date.includes('.') ? `${mo}/${dy}/${yr}` : b.date;
+      lines.push(d);
+      if (b.extraLines && b.extraLines.length) {
+        lines.push(...b.extraLines);
+      }
+      lines.push('');
+    }
+
+    if (full.notes) {
+      lines.push(full.notes.trim());
+      lines.push('');
+    }
+
+    if (full.manualEmail) {
+      lines.push(full.manualEmail);
+      if (full.manualEmailPassword) {
+        lines.push(full.manualEmailPassword);
+      }
+      lines.push('');
+    }
+
+    if (full.pendingCode) lines.push(`Reference number:${full.pendingCode}`);
+
+    return lines.join('\n').trim();
+  },
+
   _formatForTelegramPending(full) {
+    if (full.bizOnly) return this._formatBizOnlyForTelegram(full);
     const p = full.personal;
     const b = full.business;
     const phone = this._cleanPhone(p.phone);
@@ -1791,6 +1830,7 @@ const App = {
   /* ── Format for Telegram (Done) ──────────────────────── */
 
   _formatForTelegramDone(full) {
+    if (full.bizOnly) return this._formatBizOnlyForTelegram(full);
     const p = full.personal;
     const b = full.business;
     const phone = this._cleanPhone(p.phone);
